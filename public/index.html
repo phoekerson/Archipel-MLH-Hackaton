@@ -8,25 +8,26 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg:       #0e1117;
-  --surface:  #161b24;
-  --surface2: #1c2333;
-  --border:   #252d3d;
-  --blue:     #4f8ef7;
-  --blue-dim: rgba(79,142,247,0.12);
-  --green:    #3dd68c;
-  --green-dim:rgba(61,214,140,0.1);
-  --red:      #f75555;
-  --text:     #e2e8f4;
-  --text-2:   #7a8aa0;
-  --text-3:   #3d4d63;
-  --radius:   12px;
-  --radius-sm:8px;
-  --shadow:   0 8px 32px rgba(0,0,0,0.4);
+  --bg:        #0e1117;
+  --surface:   #161b24;
+  --surface2:  #1c2333;
+  --border:    #252d3d;
+  --blue:      #4f8ef7;
+  --blue-dim:  rgba(79,142,247,0.12);
+  --green:     #3dd68c;
+  --green-dim: rgba(61,214,140,0.10);
+  --red:       #f75555;
+  --purple:    #a855f7;
+  --text:      #e2e8f4;
+  --text-2:    #7a8aa0;
+  --text-3:    #3d4d63;
+  --radius:    12px;
+  --radius-sm: 8px;
+  --shadow:    0 8px 32px rgba(0,0,0,0.4);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; }
+html, body { height: 100%; overflow: hidden; }
 
 body {
   font-family: 'Sora', sans-serif;
@@ -36,15 +37,14 @@ body {
   line-height: 1.5;
 }
 
-/* ── PAGES ── */
+/* ══ PAGES ══════════════════════════════════════════════════ */
 .page { display: none; height: 100vh; }
 .page.active { display: flex; }
 
-/* ── ONBOARDING ── */
+/* ══ ONBOARDING ═════════════════════════════════════════════ */
 #page-onboarding {
   align-items: center;
   justify-content: center;
-  flex-direction: column;
   background: radial-gradient(ellipse at 50% 0%, rgba(79,142,247,0.08) 0%, transparent 70%);
 }
 
@@ -57,38 +57,23 @@ body {
   box-shadow: var(--shadow);
 }
 
-.brand {
-  text-align: center;
-  margin-bottom: 36px;
-}
+.brand { text-align: center; margin-bottom: 36px; }
 
 .brand-logo {
-  width: 52px;
-  height: 52px;
+  width: 56px; height: 56px;
   background: var(--blue-dim);
   border: 1.5px solid var(--blue);
   border-radius: 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 26px;
   margin-bottom: 16px;
 }
 
-.brand h1 {
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  margin-bottom: 6px;
-}
+.brand h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 6px; }
+.brand p  { color: var(--text-2); font-size: 13px; font-weight: 300; }
 
-.brand p {
-  color: var(--text-2);
-  font-size: 13px;
-  font-weight: 300;
-}
-
-/* Tabs switch */
 .auth-tabs {
   display: flex;
   background: var(--bg);
@@ -98,11 +83,9 @@ body {
 }
 
 .auth-tab {
-  flex: 1;
-  padding: 9px;
+  flex: 1; padding: 9px;
   text-align: center;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 13px; font-weight: 500;
   color: var(--text-2);
   cursor: pointer;
   border-radius: 6px;
@@ -115,13 +98,11 @@ body {
   box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }
 
-/* Form */
 .form-group { margin-bottom: 16px; }
 
 .form-label {
   display: block;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 12px; font-weight: 500;
   color: var(--text-2);
   margin-bottom: 8px;
   letter-spacing: 0.3px;
@@ -157,15 +138,14 @@ body {
   border: none;
   border-radius: var(--radius-sm);
   font-family: 'Sora', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 14px; font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s, transform 0.1s;
   margin-top: 8px;
 }
 
-.btn-main:hover { opacity: 0.9; }
-.btn-main:active { transform: scale(0.99); }
+.btn-main:hover   { opacity: 0.9; }
+.btn-main:active  { transform: scale(0.99); }
 .btn-main:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .error-msg {
@@ -176,187 +156,177 @@ body {
   min-height: 18px;
 }
 
-/* ── APP LAYOUT ── */
-#page-app {
-  flex-direction: row;
-  height: 100vh;
-  overflow: hidden;
-}
+/* ══ APP LAYOUT ═════════════════════════════════════════════ */
+#page-app { flex-direction: row; overflow: hidden; }
 
-/* ── SIDEBAR ── */
+/* ══ SIDEBAR ════════════════════════════════════════════════ */
 .sidebar {
-  width: 280px;
+  width: 270px;
   background: var(--surface);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  height: 100vh;
 }
 
 .sidebar-header {
-  padding: 20px 20px 16px;
+  padding: 18px 16px 14px;
   border-bottom: 1px solid var(--border);
-}
-
-.user-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  font-weight: 600;
   flex-shrink: 0;
 }
 
-.avatar-me { background: var(--blue-dim); color: var(--blue); border: 1.5px solid var(--blue); }
-.avatar-peer { background: var(--green-dim); color: var(--green); border: 1.5px solid rgba(61,214,140,0.3); }
-.avatar-offline { background: rgba(122,138,160,0.1); color: var(--text-2); border: 1.5px solid var(--border); }
+.user-card { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+
+.avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700;
+  flex-shrink: 0;
+}
+
+.avatar-me     { background: var(--blue-dim);  color: var(--blue);   border: 1.5px solid rgba(79,142,247,0.4); }
+.avatar-peer   { background: var(--green-dim); color: var(--green);  border: 1.5px solid rgba(61,214,140,0.4); }
+.avatar-offline{ background: rgba(122,138,160,0.08); color: var(--text-3); border: 1.5px solid var(--border); }
 
 .user-info { flex: 1; min-width: 0; }
 .user-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.user-status { font-size: 11px; color: var(--text-2); display: flex; align-items: center; gap: 4px; }
-.status-dot-green { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); }
-.status-dot-gray { width: 6px; height: 6px; border-radius: 50%; background: var(--text-3); }
+.user-status { font-size: 11px; color: var(--text-2); display: flex; align-items: center; gap: 5px; margin-top: 2px; }
+
+.dot-green { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 5px var(--green); }
 
 .network-badge {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: flex; align-items: center; justify-content: space-between;
   background: var(--bg);
   border-radius: var(--radius-sm);
-  padding: 8px 12px;
-  font-size: 12px;
-  color: var(--text-2);
+  padding: 7px 11px;
+  font-size: 12px; color: var(--text-2);
 }
 
-.network-badge span { color: var(--green); font-weight: 600; }
+.network-badge strong { color: var(--green); }
 
-/* Sidebar sections */
-.sidebar-section { padding: 12px 12px 0; }
-.sidebar-section-label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 1px;
+.sidebar-peers {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 8px;
+}
+
+.section-label {
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase;
   color: var(--text-3);
-  text-transform: uppercase;
-  padding: 0 8px;
-  margin-bottom: 6px;
+  padding: 6px 8px 6px;
 }
 
 .peer-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: background 0.15s;
 }
 
-.peer-row:hover { background: var(--surface2); }
+.peer-row:hover  { background: var(--surface2); }
 .peer-row.active { background: var(--blue-dim); }
 
-.peer-name { font-size: 13px; font-weight: 500; flex: 1; }
-.peer-status-text { font-size: 11px; color: var(--text-2); }
+.peer-row .peer-info { flex: 1; min-width: 0; }
+.peer-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.peer-sub  { font-size: 11px; color: var(--text-2); margin-top: 1px; }
 
 .no-peers-msg {
-  padding: 20px 8px;
+  padding: 24px 8px;
   text-align: center;
   color: var(--text-3);
   font-size: 12px;
-  line-height: 1.8;
+  line-height: 2;
 }
 
-/* Sidebar bottom actions */
-.sidebar-actions {
-  margin-top: auto;
-  padding: 12px;
+/* Sidebar bottom nav */
+.sidebar-nav {
+  display: flex;
   border-top: 1px solid var(--border);
-  display: flex;
-  gap: 8px;
+  flex-shrink: 0;
 }
 
-.btn-icon {
-  flex: 1;
-  padding: 10px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+.nav-btn {
+  flex: 1; padding: 14px 8px;
+  background: transparent;
+  border: none;
   color: var(--text-2);
-  font-size: 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: all 0.2s;
   font-family: 'Sora', sans-serif;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 4px;
+  transition: all 0.2s;
+  border-top: 2px solid transparent;
 }
 
-.btn-icon:hover { background: var(--border); color: var(--text); }
-.btn-icon.active-tab { background: var(--blue-dim); color: var(--blue); border-color: var(--blue); }
+.nav-btn:hover { color: var(--text); background: var(--surface2); }
 
-/* ── MAIN CONTENT ── */
+.nav-btn.active {
+  color: var(--blue);
+  border-top-color: var(--blue);
+  background: var(--blue-dim);
+}
+
+.nav-btn-icon { font-size: 18px; }
+
+/* ══ MAIN CONTENT ════════════════════════════════════════════ */
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  height: 100vh;
   overflow: hidden;
+  min-width: 0;
 }
 
-/* ── CHAT VIEW ── */
-.chat-view {
-  display: none;
-  flex-direction: column;
-  height: 100%;
+/* ══ VIEWS — toutes cachées par défaut via JS ════════════════ */
+.view { display: none; flex-direction: column; height: 100%; overflow: hidden; }
+.view.active { display: flex; }
+
+/* ══ EMPTY STATE ════════════════════════════════════════════ */
+.empty-state {
+  flex: 1;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: var(--text-2);
+  text-align: center;
+  padding: 40px;
 }
 
-.chat-view.visible { display: flex; }
+.empty-icon  { font-size: 52px; margin-bottom: 16px; opacity: 0.4; }
+.empty-title { font-size: 17px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+.empty-sub   { font-size: 13px; line-height: 1.8; color: var(--text-2); }
 
+/* ══ CHAT VIEW ══════════════════════════════════════════════ */
 .chat-header {
-  padding: 16px 24px;
+  padding: 14px 22px;
   border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 12px;
   background: var(--surface);
+  display: flex; align-items: center; gap: 12px;
+  flex-shrink: 0;
 }
 
 .chat-header-info h2 { font-size: 15px; font-weight: 600; }
-.chat-header-info p { font-size: 12px; color: var(--text-2); }
+.chat-header-info p  { font-size: 12px; color: var(--text-2); margin-top: 2px; }
 
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
+  padding: 20px 22px;
+  display: flex; flex-direction: column;
+  gap: 10px;
 }
 
-.msg-bubble {
-  display: flex;
-  flex-direction: column;
-  max-width: 65%;
-}
-
-.msg-bubble.me { align-self: flex-end; align-items: flex-end; }
+.msg-bubble { display: flex; flex-direction: column; max-width: 65%; }
+.msg-bubble.me   { align-self: flex-end; align-items: flex-end; }
 .msg-bubble.them { align-self: flex-start; align-items: flex-start; }
 
 .bubble {
-  padding: 11px 16px;
+  padding: 10px 15px;
   border-radius: 16px;
   font-size: 14px;
   line-height: 1.5;
@@ -376,30 +346,26 @@ body {
 }
 
 .bubble-meta {
-  font-size: 10px;
-  color: var(--text-3);
-  margin-top: 4px;
-  padding: 0 4px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  font-size: 10px; color: var(--text-3);
+  margin-top: 4px; padding: 0 4px;
+  display: flex; align-items: center; gap: 5px;
 }
 
-.encrypted-badge {
+.e2e-badge {
   font-size: 9px;
   background: var(--green-dim);
   color: var(--green);
   padding: 1px 6px;
   border-radius: 20px;
+  border: 1px solid rgba(61,214,140,0.2);
 }
 
-.chat-input-area {
-  padding: 16px 24px;
+.chat-input-bar {
+  padding: 14px 18px;
   border-top: 1px solid var(--border);
   background: var(--surface);
-  display: flex;
-  gap: 10px;
-  align-items: center;
+  display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0;
 }
 
 .chat-input {
@@ -407,7 +373,7 @@ body {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 24px;
-  padding: 11px 18px;
+  padding: 10px 18px;
   color: var(--text);
   font-family: 'Sora', sans-serif;
   font-size: 14px;
@@ -419,51 +385,34 @@ body {
 .chat-input::placeholder { color: var(--text-3); }
 
 .btn-send {
-  width: 42px;
-  height: 42px;
+  width: 40px; height: 40px;
   border-radius: 50%;
   background: var(--blue);
   border: none;
   color: white;
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   transition: opacity 0.2s;
 }
 
 .btn-send:hover { opacity: 0.85; }
 
-/* ── FILES VIEW ── */
-.files-view {
-  display: none;
-  flex-direction: column;
-  height: 100%;
-  padding: 28px;
+/* ══ FILES VIEW ═════════════════════════════════════════════ */
+.files-content {
+  flex: 1;
   overflow-y: auto;
+  padding: 24px;
 }
 
-.files-view.visible { display: flex; }
+.view-title    { font-size: 19px; font-weight: 700; margin-bottom: 4px; }
+.view-subtitle { color: var(--text-2); font-size: 13px; margin-bottom: 24px; }
 
-.view-title {
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-
-.view-subtitle {
-  color: var(--text-2);
-  font-size: 13px;
-  margin-bottom: 28px;
-}
-
-/* Share zone */
 .share-zone {
   border: 2px dashed var(--border);
   border-radius: var(--radius);
-  padding: 40px;
+  padding: 36px;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s;
@@ -475,24 +424,21 @@ body {
   background: var(--blue-dim);
 }
 
-.share-zone-icon { font-size: 32px; margin-bottom: 12px; }
-.share-zone-title { font-weight: 600; margin-bottom: 6px; }
-.share-zone-sub { color: var(--text-2); font-size: 13px; }
+.share-zone-icon  { font-size: 32px; margin-bottom: 10px; }
+.share-zone-title { font-weight: 600; margin-bottom: 4px; }
+.share-zone-sub   { color: var(--text-2); font-size: 13px; }
+#fileInputHidden  { display: none; }
 
-#fileInputHidden { display: none; }
-
-.section-title {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
+.files-section-title {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.8px; text-transform: uppercase;
   color: var(--text-3);
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .files-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 12px;
   margin-bottom: 28px;
 }
@@ -507,49 +453,37 @@ body {
   position: relative;
 }
 
-.file-card:hover { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(79,142,247,0.08); }
+.file-card:hover {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(79,142,247,0.07);
+}
 
-.file-card-icon { font-size: 28px; margin-bottom: 10px; }
-.file-card-name { font-weight: 600; font-size: 13px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.file-card-icon { font-size: 26px; margin-bottom: 10px; }
+.file-card-name { font-weight: 600; font-size: 13px; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .file-card-meta { font-size: 11px; color: var(--text-2); }
-.file-card-owner { font-size: 11px; color: var(--blue); margin-top: 8px; }
+.file-card-owner{ font-size: 11px; color: var(--blue); margin-top: 6px; }
 
-.badge-local {
-  position: absolute;
-  top: 10px; right: 10px;
-  font-size: 9px;
-  background: var(--green-dim);
-  color: var(--green);
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-weight: 600;
+.badge {
+  position: absolute; top: 10px; right: 10px;
+  font-size: 9px; font-weight: 600;
+  padding: 2px 8px; border-radius: 20px;
 }
 
-.badge-network {
-  position: absolute;
-  top: 10px; right: 10px;
-  font-size: 9px;
-  background: var(--blue-dim);
-  color: var(--blue);
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-weight: 600;
-}
+.badge-local   { background: var(--green-dim); color: var(--green); }
+.badge-network { background: var(--blue-dim);  color: var(--blue); }
 
-/* Download progress */
-.download-progress {
+/* Barre de progression */
+.progress-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px;
-  margin-bottom: 12px;
-  display: none;
+  margin-bottom: 16px;
 }
 
-.download-progress.visible { display: block; }
-.download-filename { font-weight: 600; font-size: 13px; margin-bottom: 10px; }
-.progress-track { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
-.progress-fill {
+.progress-title { font-weight: 600; font-size: 13px; margin-bottom: 10px; }
+.progress-track { height: 5px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+.progress-fill  {
   height: 100%;
   background: linear-gradient(90deg, var(--blue), var(--green));
   border-radius: 3px;
@@ -558,72 +492,19 @@ body {
 }
 .progress-label { font-size: 11px; color: var(--text-2); margin-top: 6px; }
 
-/* ── AI VIEW ── */
-.ai-view {
-  display: none;
-  flex-direction: column;
-  height: 100%;
-}
+/* ══ AI VIEW ════════════════════════════════════════════════ */
+/* Réutilise chat-messages, chat-input-bar */
 
-.ai-view.visible { display: flex; }
-
-/* ── EMPTY STATE ── */
-.empty-state {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-2);
-  text-align: center;
-  padding: 40px;
-}
-
-.empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
-.empty-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
-.empty-sub { font-size: 13px; line-height: 1.7; }
-
-/* ── TOAST ── */
-.toasts {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: 9999;
-}
-
-.toast {
-  padding: 12px 18px;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 500;
-  animation: toast-in 0.3s ease;
-  box-shadow: var(--shadow);
-}
-
-.toast-success { background: var(--green-dim); color: var(--green); border: 1px solid rgba(61,214,140,0.3); }
-.toast-error { background: rgba(247,85,85,0.1); color: var(--red); border: 1px solid rgba(247,85,85,0.3); }
-.toast-info { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(79,142,247,0.3); }
-
-@keyframes toast-in {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-/* ── MODAL ── */
+/* ══ MODAL ══════════════════════════════════════════════════ */
 .modal-overlay {
   display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  z-index: 100;
-  align-items: center;
-  justify-content: center;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.65);
+  z-index: 200;
+  align-items: center; justify-content: center;
 }
 
-.modal-overlay.visible { display: flex; }
+.modal-overlay.open { display: flex; }
 
 .modal {
   background: var(--surface);
@@ -635,10 +516,11 @@ body {
 }
 
 .modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
-.modal p { color: var(--text-2); font-size: 13px; margin-bottom: 20px; }
+.modal p  { color: var(--text-2); font-size: 13px; margin-bottom: 22px; line-height: 1.6; }
+
 .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
-.btn-secondary {
+.btn-cancel {
   padding: 10px 20px;
   background: var(--surface2);
   border: 1px solid var(--border);
@@ -649,42 +531,63 @@ body {
   cursor: pointer;
 }
 
-.btn-primary-sm {
+.btn-confirm {
   padding: 10px 20px;
   background: var(--blue);
   border: none;
   border-radius: var(--radius-sm);
   color: white;
   font-family: 'Sora', sans-serif;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 13px; font-weight: 600;
   cursor: pointer;
 }
 
-/* scrollbar */
+/* ══ TOAST ══════════════════════════════════════════════════ */
+.toasts {
+  position: fixed; bottom: 20px; right: 20px;
+  display: flex; flex-direction: column; gap: 8px;
+  z-index: 999;
+}
+
+.toast {
+  padding: 11px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 500;
+  animation: toastIn 0.25s ease;
+  box-shadow: var(--shadow);
+}
+
+.toast-success { background: rgba(61,214,140,0.12);  color: var(--green);  border: 1px solid rgba(61,214,140,0.25); }
+.toast-error   { background: rgba(247,85,85,0.12);   color: var(--red);    border: 1px solid rgba(247,85,85,0.25); }
+.toast-info    { background: var(--blue-dim);         color: var(--blue);   border: 1px solid rgba(79,142,247,0.25); }
+
+@keyframes toastIn {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* Scrollbar */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════
-     PAGE 1 — ONBOARDING
-══════════════════════════════════════════ -->
+<!-- ══ PAGE ONBOARDING ══════════════════════════════════════ -->
 <div class="page active" id="page-onboarding">
   <div class="onboarding-card">
     <div class="brand">
       <div class="brand-logo">🏝️</div>
       <h1>Archipel</h1>
-      <p>Réseau privé, chiffré, sans serveur central</p>
+      <p>Réseau privé · Chiffré · Sans serveur central</p>
     </div>
 
     <div class="auth-tabs">
-      <div class="auth-tab active" onclick="switchAuthTab('register')">Rejoindre</div>
-      <div class="auth-tab" onclick="switchAuthTab('login')">Se connecter</div>
+      <div class="auth-tab active" id="tab-register" onclick="switchAuthTab('register')">Créer un compte</div>
+      <div class="auth-tab"        id="tab-login"    onclick="switchAuthTab('login')">Se connecter</div>
     </div>
 
-    <!-- Formulaire inscription -->
+    <!-- Inscription -->
     <div id="form-register">
       <div class="form-row">
         <div class="form-group">
@@ -698,27 +601,30 @@ body {
       </div>
       <div class="form-group">
         <label class="form-label">Mot de passe</label>
-        <input class="form-input" id="reg-password" type="password" placeholder="••••••••">
+        <input class="form-input" id="reg-password" type="password" placeholder="••••••••"
+          onkeydown="if(event.key==='Enter') register()">
       </div>
-      <button class="btn-main" id="btn-register" onclick="register()">Créer mon identité et rejoindre</button>
+      <button class="btn-main" id="btn-register" onclick="register()">
+        Rejoindre le réseau
+      </button>
       <div class="error-msg" id="reg-error"></div>
     </div>
 
-    <!-- Formulaire connexion -->
+    <!-- Connexion -->
     <div id="form-login" style="display:none">
-      <div class="form-group">
+      <div class="form-group" style="margin-bottom:6px">
+        <div style="font-size:13px;color:var(--text-2);margin-bottom:16px" id="login-name-hint"></div>
         <label class="form-label">Mot de passe</label>
-        <input class="form-input" id="login-password" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter') login()">
+        <input class="form-input" id="login-password" type="password" placeholder="••••••••"
+          onkeydown="if(event.key==='Enter') login()">
       </div>
-      <button class="btn-main" onclick="login()">Rejoindre le réseau</button>
+      <button class="btn-main" onclick="login()">Se connecter</button>
       <div class="error-msg" id="login-error"></div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     PAGE 2 — APPLICATION
-══════════════════════════════════════════ -->
+<!-- ══ PAGE APPLICATION ══════════════════════════════════════ -->
 <div class="page" id="page-app">
 
   <!-- Sidebar -->
@@ -728,36 +634,31 @@ body {
         <div class="avatar avatar-me" id="myAvatar">?</div>
         <div class="user-info">
           <div class="user-name" id="myName">—</div>
-          <div class="user-status">
-            <span class="status-dot-green"></span>
-            Connecté au réseau
-          </div>
+          <div class="user-status"><span class="dot-green"></span> Connecté</div>
         </div>
       </div>
       <div class="network-badge">
         <span>🌐 Réseau local</span>
-        <span id="peerCountBadge">0 pairs</span>
+        <strong id="peerCountBadge">0 pair</strong>
       </div>
     </div>
 
-    <div class="sidebar-section" style="flex:1; overflow-y:auto;">
-      <div class="sidebar-section-label">Sur le réseau</div>
-      <div id="peerListSidebar">
-        <div class="no-peers-msg">
-          🔍 Recherche de personnes<br>sur votre réseau...
-        </div>
+    <div class="sidebar-peers">
+      <div class="section-label">Personnes sur le réseau</div>
+      <div id="peerListEl">
+        <div class="no-peers-msg">🔍 Recherche en cours...</div>
       </div>
     </div>
 
-    <div class="sidebar-actions">
-      <button class="btn-icon active-tab" id="btn-tab-chat" onclick="showView('chat-empty')">
-        💬 Messages
+    <div class="sidebar-nav">
+      <button class="nav-btn active" id="nav-messages" onclick="setNav('messages')">
+        <span class="nav-btn-icon">💬</span>Messages
       </button>
-      <button class="btn-icon" id="btn-tab-files" onclick="showView('files')">
-        📁 Fichiers
+      <button class="nav-btn" id="nav-files" onclick="setNav('files')">
+        <span class="nav-btn-icon">📁</span>Fichiers
       </button>
-      <button class="btn-icon" id="btn-tab-ai" onclick="showView('ai')">
-        ✨ IA
+      <button class="nav-btn" id="nav-ai" onclick="setNav('ai')">
+        <span class="nav-btn-icon">✨</span>IA
       </button>
     </div>
   </div>
@@ -765,76 +666,73 @@ body {
   <!-- Contenu principal -->
   <div class="main-content">
 
-    <!-- État vide chat -->
-    <div class="empty-state" id="view-chat-empty" style="display:flex">
-      <div class="empty-icon">💬</div>
-      <div class="empty-title">Vos messages</div>
-      <div class="empty-sub">Sélectionnez une personne<br>dans la liste pour commencer</div>
+    <!-- Vue : Accueil messages -->
+    <div class="view active" id="view-welcome">
+      <div class="empty-state">
+        <div class="empty-icon">💬</div>
+        <div class="empty-title">Vos messages chiffrés</div>
+        <div class="empty-sub">Cliquez sur une personne dans la liste<br>pour démarrer une conversation sécurisée</div>
+      </div>
     </div>
 
-    <!-- Vue chat -->
-    <div class="chat-view" id="view-chat">
+    <!-- Vue : Chat avec un pair -->
+    <div class="view" id="view-chat">
       <div class="chat-header">
         <div class="avatar avatar-peer" id="chatAvatar">?</div>
         <div class="chat-header-info">
-          <h2 id="chatName">—</h2>
-          <p>Chiffrement de bout en bout activé 🔐</p>
+          <h2 id="chatPeerName">—</h2>
+          <p>🔐 Chiffrement de bout en bout actif</p>
         </div>
       </div>
-      <div class="chat-messages" id="chatMessages">
-        <div class="empty-state" style="flex:1">
-          <div class="empty-icon">🔐</div>
-          <div class="empty-sub">Les messages sont chiffrés.<br>Personne d'autre ne peut les lire.</div>
-        </div>
-      </div>
-      <div class="chat-input-area">
-        <input class="chat-input" id="chatInput" type="text" placeholder="Votre message..."
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input-bar">
+        <input class="chat-input" id="chatInput"
+          type="text" placeholder="Votre message..."
           onkeydown="if(event.key==='Enter') sendMessage()">
-        <button class="btn-send" onclick="sendMessage()">➤</button>
+        <button class="btn-send" onclick="sendMessage()" title="Envoyer">➤</button>
       </div>
     </div>
 
-    <!-- Vue fichiers -->
-    <div class="files-view" id="view-files">
-      <div class="view-title">Partage de fichiers</div>
-      <div class="view-subtitle">Partagez et recevez des fichiers avec les personnes sur le réseau</div>
+    <!-- Vue : Fichiers -->
+    <div class="view" id="view-files">
+      <div class="files-content">
+        <div class="view-title">Partage de fichiers</div>
+        <div class="view-subtitle">Partagez des fichiers avec les personnes sur le réseau</div>
 
-      <!-- Zone de partage -->
-      <div class="share-zone" id="shareZone"
-        onclick="document.getElementById('fileInputHidden').click()"
-        ondragover="event.preventDefault(); this.classList.add('drag-over')"
-        ondragleave="this.classList.remove('drag-over')"
-        ondrop="handleDrop(event)">
-        <div class="share-zone-icon">📤</div>
-        <div class="share-zone-title">Déposer un fichier ici</div>
-        <div class="share-zone-sub">ou cliquer pour sélectionner</div>
-      </div>
-      <input type="file" id="fileInputHidden" onchange="handleFileSelect(event)">
+        <div class="share-zone" id="shareZone"
+          onclick="document.getElementById('fileInputHidden').click()"
+          ondragover="event.preventDefault(); this.classList.add('drag-over')"
+          ondragleave="this.classList.remove('drag-over')"
+          ondrop="handleDrop(event)">
+          <div class="share-zone-icon">📤</div>
+          <div class="share-zone-title">Déposer un fichier ici</div>
+          <div class="share-zone-sub">ou cliquer pour sélectionner</div>
+        </div>
+        <input type="file" id="fileInputHidden" onchange="handleFileSelect(event)">
 
-      <!-- Progression -->
-      <div class="download-progress" id="downloadProgress">
-        <div class="download-filename" id="downloadFilename">Téléchargement...</div>
-        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-        <div class="progress-label" id="progressLabel">Démarrage...</div>
-      </div>
+        <!-- Progression -->
+        <div class="progress-card" id="progressCard" style="display:none">
+          <div class="progress-title" id="progressTitle">Téléchargement...</div>
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="progress-label" id="progressLabel">Démarrage...</div>
+        </div>
 
-      <!-- Fichiers disponibles sur le réseau -->
-      <div class="section-title">Disponibles sur le réseau</div>
-      <div class="files-grid" id="networkFilesGrid">
-        <div class="no-peers-msg" style="grid-column:1/-1">Aucun fichier partagé sur le réseau</div>
-      </div>
+        <div class="files-section-title">Disponibles sur le réseau</div>
+        <div class="files-grid" id="networkFiles">
+          <div class="no-peers-msg" style="grid-column:1/-1">Aucun fichier partagé sur le réseau</div>
+        </div>
 
-      <!-- Mes fichiers partagés -->
-      <div class="section-title">Mes fichiers partagés</div>
-      <div class="files-grid" id="localFilesGrid">
-        <div class="no-peers-msg" style="grid-column:1/-1">Vous n'avez pas encore partagé de fichier</div>
+        <div class="files-section-title">Mes fichiers partagés</div>
+        <div class="files-grid" id="localFiles">
+          <div class="no-peers-msg" style="grid-column:1/-1">Vous n'avez pas encore partagé de fichier</div>
+        </div>
       </div>
     </div>
 
-    <!-- Vue IA -->
-    <div class="ai-view" id="view-ai">
+    <!-- Vue : IA -->
+    <div class="view" id="view-ai">
       <div class="chat-header">
-        <div class="avatar" style="background:rgba(168,85,247,0.1);color:#a855f7;border:1.5px solid rgba(168,85,247,0.4)">✨</div>
+        <div class="avatar" style="background:rgba(168,85,247,0.1);color:var(--purple);border:1.5px solid rgba(168,85,247,0.35)">✨</div>
         <div class="chat-header-info">
           <h2>Assistant IA</h2>
           <p>Posez n'importe quelle question</p>
@@ -842,12 +740,13 @@ body {
       </div>
       <div class="chat-messages" id="aiMessages">
         <div class="msg-bubble them">
-          <div class="bubble">Bonjour ! Je suis votre assistant intégré. Posez-moi n'importe quelle question sur le réseau ou autre chose.</div>
+          <div class="bubble">Bonjour ! Je suis votre assistant. Comment puis-je vous aider ?</div>
           <div class="bubble-meta">Assistant · maintenant</div>
         </div>
       </div>
-      <div class="chat-input-area">
-        <input class="chat-input" id="aiInput" type="text" placeholder="Votre question..."
+      <div class="chat-input-bar">
+        <input class="chat-input" id="aiInput"
+          type="text" placeholder="Votre question..."
           onkeydown="if(event.key==='Enter') askAI()">
         <button class="btn-send" onclick="askAI()">➤</button>
       </div>
@@ -856,14 +755,14 @@ body {
   </div>
 </div>
 
-<!-- Modal confirmation téléchargement -->
+<!-- Modal téléchargement -->
 <div class="modal-overlay" id="downloadModal">
   <div class="modal">
     <h3>Télécharger ce fichier ?</h3>
-    <p id="downloadModalDesc">—</p>
+    <p id="downloadModalDesc"></p>
     <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeModal()">Annuler</button>
-      <button class="btn-primary-sm" onclick="confirmDownload()">Télécharger</button>
+      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-confirm" onclick="confirmDownload()">Télécharger</button>
     </div>
   </div>
 </div>
@@ -871,445 +770,453 @@ body {
 <div class="toasts" id="toasts"></div>
 
 <script>
-  // ── État global ────────────────────────────────────────────
-  let currentUser = null;
-  let selectedPeer = null;
-  let allPeers = [];
-  let pendingDownload = null;
+// ── État ────────────────────────────────────────────────────
+let currentUser  = null;
+let selectedPeer = null;
+let allPeers     = [];
+let pendingDl    = null;
+let lastMsgTs    = 0;
+let currentNav   = 'messages';
 
-  // ── Toast ──────────────────────────────────────────────────
-  function toast(msg, type = 'info') {
-    const el = document.createElement('div');
-    el.className = `toast toast-${type}`;
-    el.textContent = msg;
-    document.getElementById('toasts').appendChild(el);
-    setTimeout(() => el.remove(), 4000);
+// ── Helpers ─────────────────────────────────────────────────
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmt(bytes) {
+  if (bytes > 1e9) return (bytes/1e9).toFixed(1)+' Go';
+  if (bytes > 1e6) return (bytes/1e6).toFixed(1)+' Mo';
+  if (bytes > 1e3) return (bytes/1e3).toFixed(0)+' Ko';
+  return bytes+' o';
+}
+
+function fileIcon(name) {
+  const ext = (name||'').split('.').pop().toLowerCase();
+  return {pdf:'📄',jpg:'🖼️',jpeg:'🖼️',png:'🖼️',gif:'🖼️',
+          mp4:'🎬',mov:'🎬',avi:'🎬',mp3:'🎵',wav:'🎵',
+          zip:'🗜️',rar:'🗜️',txt:'📝',doc:'📝',docx:'📝',
+          xls:'📊',xlsx:'📊',ppt:'📑',pptx:'📑'}[ext] || '📁';
+}
+
+function timeStr(ts) {
+  return new Date(ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ── Navigation principale ────────────────────────────────────
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const el = document.getElementById('view-' + id);
+  if (el) el.classList.add('active');
+}
+
+function setNav(nav) {
+  currentNav = nav;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('nav-' + nav).classList.add('active');
+
+  if (nav === 'messages') {
+    showView(selectedPeer ? 'chat' : 'welcome');
+  } else if (nav === 'files') {
+    showView('files');
+    refreshFiles();
+  } else if (nav === 'ai') {
+    showView('ai');
+  }
+}
+
+// ── Onboarding ───────────────────────────────────────────────
+function switchAuthTab(tab) {
+  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+  document.getElementById('tab-login').classList.toggle('active',    tab === 'login');
+  document.getElementById('form-register').style.display = tab === 'register' ? 'block' : 'none';
+  document.getElementById('form-login').style.display    = tab === 'login'    ? 'block' : 'none';
+}
+
+async function register() {
+  const firstName = document.getElementById('reg-firstname').value.trim();
+  const lastName  = document.getElementById('reg-lastname').value.trim();
+  const password  = document.getElementById('reg-password').value;
+  const errEl     = document.getElementById('reg-error');
+  const btn       = document.getElementById('btn-register');
+
+  if (!firstName || !lastName || !password) {
+    errEl.textContent = 'Tous les champs sont requis'; return;
+  }
+  if (password.length < 6) {
+    errEl.textContent = 'Mot de passe trop court (6 caractères min.)'; return;
   }
 
-  // ── Onboarding ─────────────────────────────────────────────
-  function switchAuthTab(tab) {
-    document.querySelectorAll('.auth-tab').forEach((t, i) => {
-      t.classList.toggle('active', ['register','login'][i] === tab);
+  btn.disabled = true;
+  btn.textContent = 'Création de votre identité...';
+  errEl.textContent = '';
+
+  try {
+    const res  = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ firstName, lastName, password })
     });
-    document.getElementById('form-register').style.display = tab === 'register' ? 'block' : 'none';
-    document.getElementById('form-login').style.display = tab === 'login' ? 'block' : 'none';
-  }
+    const data = await res.json();
 
-  async function register() {
-    const firstName = document.getElementById('reg-firstname').value.trim();
-    const lastName = document.getElementById('reg-lastname').value.trim();
-    const password = document.getElementById('reg-password').value;
-    const errEl = document.getElementById('reg-error');
-    const btn = document.getElementById('btn-register');
-
-    if (!firstName || !lastName || !password) {
-      errEl.textContent = 'Tous les champs sont requis';
-      return;
-    }
-    if (password.length < 6) {
-      errEl.textContent = 'Mot de passe trop court (6 caractères min.)';
-      return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = 'Création de votre identité...';
-    errEl.textContent = '';
-
-    try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firstName, lastName, password })
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        currentUser = data.displayName;
-        enterApp(currentUser);
-      } else {
-        errEl.textContent = data.error || 'Erreur';
-        btn.disabled = false;
-        btn.textContent = 'Créer mon identité et rejoindre';
-      }
-    } catch (e) {
-      errEl.textContent = 'Impossible de contacter le serveur';
+    if (data.success) {
+      enterApp(data.displayName);
+    } else {
+      errEl.textContent = data.error || 'Erreur';
       btn.disabled = false;
-      btn.textContent = 'Créer mon identité et rejoindre';
+      btn.textContent = 'Rejoindre le réseau';
     }
+  } catch (e) {
+    errEl.textContent = 'Impossible de contacter le serveur';
+    btn.disabled = false;
+    btn.textContent = 'Rejoindre le réseau';
   }
+}
 
-  async function login() {
-    const password = document.getElementById('login-password').value;
-    const errEl = document.getElementById('login-error');
+async function login() {
+  const password = document.getElementById('login-password').value;
+  const errEl    = document.getElementById('login-error');
 
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password })
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        currentUser = data.displayName;
-        enterApp(currentUser);
-      } else {
-        errEl.textContent = data.error || 'Mot de passe incorrect';
-      }
-    } catch (e) {
-      errEl.textContent = 'Impossible de contacter le serveur';
-    }
-  }
-
-  function enterApp(displayName) {
-    document.getElementById('page-onboarding').classList.remove('active');
-    document.getElementById('page-app').classList.add('active');
-    document.getElementById('myName').textContent = displayName;
-    document.getElementById('myAvatar').textContent = displayName.charAt(0).toUpperCase();
-    toast(`Bienvenue, ${displayName} ! 👋`, 'success');
-    startPolling();
-  }
-
-  // ── Navigation ─────────────────────────────────────────────
-  function showView(view) {
-    // Masquer tout
-    ['chat-empty', 'chat', 'files', 'ai'].forEach(v => {
-      const el = document.getElementById('view-' + v);
-      if (el) { el.style.display = 'none'; if (el.classList) el.classList.remove('visible'); }
+  try {
+    const res  = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ password })
     });
-    // Tabs
-    ['btn-tab-chat', 'btn-tab-files', 'btn-tab-ai'].forEach(id =>
-      document.getElementById(id)?.classList.remove('active-tab')
-    );
+    const data = await res.json();
 
-    if (view === 'chat-empty') {
-      document.getElementById('view-chat-empty').style.display = 'flex';
-      document.getElementById('btn-tab-chat').classList.add('active-tab');
-    } else if (view === 'chat') {
-      document.getElementById('view-chat').classList.add('visible');
-      document.getElementById('btn-tab-chat').classList.add('active-tab');
-    } else if (view === 'files') {
-      document.getElementById('view-files').classList.add('visible');
-      document.getElementById('btn-tab-files').classList.add('active-tab');
-      refreshFiles();
-    } else if (view === 'ai') {
-      document.getElementById('view-ai').classList.add('visible');
-      document.getElementById('btn-tab-ai').classList.add('active-tab');
+    if (data.success) {
+      enterApp(data.displayName);
+    } else {
+      errEl.textContent = data.error || 'Mot de passe incorrect';
     }
+  } catch (e) {
+    errEl.textContent = 'Impossible de contacter le serveur';
   }
+}
 
-  // ── Sélectionner un pair ───────────────────────────────────
-  function selectPeer(peer) {
-    selectedPeer = peer;
-    showView('chat');
+function enterApp(displayName) {
+  currentUser = displayName;
+  document.getElementById('page-onboarding').classList.remove('active');
+  document.getElementById('page-app').classList.add('active');
+  document.getElementById('myName').textContent   = displayName;
+  document.getElementById('myAvatar').textContent = displayName.charAt(0).toUpperCase();
+  toast(`Bienvenue, ${displayName} ! 👋`, 'success');
+  showView('welcome');
+  startPolling();
+}
 
-    document.getElementById('chatName').textContent = peer.displayName;
-    document.getElementById('chatAvatar').textContent = peer.displayName.charAt(0).toUpperCase();
-    document.getElementById('chatAvatar').className = 'avatar ' + (peer.online ? 'avatar-peer' : 'avatar-offline');
+// ── Sélection d'un pair ──────────────────────────────────────
+function selectPeer(peer) {
+  selectedPeer = peer;
+  currentNav   = 'messages';
 
-    // Mettre en évidence dans la sidebar
-    document.querySelectorAll('.peer-row').forEach(r => r.classList.remove('active'));
-    document.getElementById('peer-' + peer.nodeId)?.classList.add('active');
+  // Mettre à jour nav
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('nav-messages').classList.add('active');
 
-    loadMessages(peer.nodeId);
-  }
+  // Mettre en surbrillance dans sidebar
+  document.querySelectorAll('.peer-row').forEach(r => r.classList.remove('active'));
+  const row = document.getElementById('peer-row-' + peer.nodeId);
+  if (row) row.classList.add('active');
 
-  // ── Rafraîchir le réseau ───────────────────────────────────
-  async function refreshNetwork() {
-    try {
-      const res = await fetch('/api/network');
-      const data = await res.json();
+  // Mettre à jour l'en-tête du chat
+  document.getElementById('chatPeerName').textContent = peer.displayName;
+  document.getElementById('chatAvatar').textContent   = peer.displayName.charAt(0).toUpperCase();
+  document.getElementById('chatAvatar').className = 'avatar ' + (peer.online ? 'avatar-peer' : 'avatar-offline');
 
-      allPeers = data.peers;
-      const count = allPeers.length;
+  // Afficher la vue chat
+  showView('chat');
 
-      document.getElementById('peerCountBadge').textContent =
-        count === 0 ? '0 pair' : `${count} pair${count > 1 ? 's' : ''}`;
+  // Charger les messages
+  loadMessages(peer.nodeId);
+}
 
-      const sidebar = document.getElementById('peerListSidebar');
-      if (count === 0) {
-        sidebar.innerHTML = `<div class="no-peers-msg">🔍 Recherche de personnes<br>sur votre réseau...</div>`;
-      } else {
-        sidebar.innerHTML = allPeers.map(p => `
-          <div class="peer-row" id="peer-${p.nodeId}" onclick='selectPeer(${JSON.stringify(p)})'>
-            <div class="avatar ${p.online ? 'avatar-peer' : 'avatar-offline'}" style="width:34px;height:34px;font-size:13px">
-              ${p.displayName.charAt(0).toUpperCase()}
+// ── Réseau / pairs ───────────────────────────────────────────
+async function refreshNetwork() {
+  try {
+    const res  = await fetch('/api/network');
+    const data = await res.json();
+    allPeers   = data.peers;
+
+    const count = allPeers.length;
+    document.getElementById('peerCountBadge').textContent =
+      count === 0 ? '0 pair' : `${count} pair${count > 1 ? 's' : ''}`;
+
+    const el = document.getElementById('peerListEl');
+    if (count === 0) {
+      el.innerHTML = `<div class="no-peers-msg">🔍 Aucune personne trouvée<br>sur le réseau pour l'instant</div>`;
+    } else {
+      el.innerHTML = allPeers.map(p => {
+        const initial = (p.displayName || '?').charAt(0).toUpperCase();
+        const isActive = selectedPeer?.nodeId === p.nodeId;
+        return `
+          <div class="peer-row ${isActive ? 'active' : ''}"
+               id="peer-row-${escHtml(p.nodeId)}"
+               onclick='selectPeer(${JSON.stringify(p)})'>
+            <div class="avatar ${p.online ? 'avatar-peer' : 'avatar-offline'}"
+                 style="width:34px;height:34px;font-size:13px">${initial}</div>
+            <div class="peer-info">
+              <div class="peer-name">${escHtml(p.displayName)}</div>
+              <div class="peer-sub">${p.online ? '🟢 En ligne' : '⚫ Hors ligne'}</div>
             </div>
-            <div>
-              <div class="peer-name">${p.displayName}</div>
-              <div class="peer-status-text">${p.online ? '🟢 En ligne' : '⚫ Hors ligne'}</div>
-            </div>
-          </div>
-        `).join('');
-      }
-    } catch (e) {}
-  }
+          </div>`;
+      }).join('');
+    }
+  } catch (e) {}
+}
 
-  // ── Messages ───────────────────────────────────────────────
-  let lastMsgCount = 0;
+// ── Messages ─────────────────────────────────────────────────
+async function loadMessages(nodeId) {
+  try {
+    const res  = await fetch(`/api/chat/${nodeId}`);
+    const msgs = await res.json();
+    const container = document.getElementById('chatMessages');
 
-  async function loadMessages(nodeId) {
-    try {
-      const res = await fetch(`/api/chat/${nodeId}`);
-      const msgs = await res.json();
-
-      if (msgs.length === lastMsgCount && nodeId === selectedPeer?.nodeId) return;
-      lastMsgCount = msgs.length;
-
-      const container = document.getElementById('chatMessages');
-      if (msgs.length === 0) {
-        container.innerHTML = `<div class="empty-state" style="flex:1">
+    if (msgs.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state" style="flex:1">
           <div class="empty-icon">🔐</div>
           <div class="empty-sub">Les messages sont chiffrés.<br>Personne d'autre ne peut les lire.</div>
         </div>`;
-        return;
-      }
+      return;
+    }
 
-      container.innerHTML = msgs.map(m => {
-        const isMe = m.from === 'me';
-        const time = new Date(m.ts).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-        return `<div class="msg-bubble ${isMe ? 'me' : 'them'}">
-          <div class="bubble">${escapeHtml(m.text)}</div>
+    container.innerHTML = msgs.map(m => {
+      const isMe = m.from === 'me';
+      return `
+        <div class="msg-bubble ${isMe ? 'me' : 'them'}">
+          <div class="bubble">${escHtml(m.text)}</div>
           <div class="bubble-meta">
-            ${isMe ? 'Vous' : m.fromName} · ${time}
-            <span class="encrypted-badge">🔐 E2E</span>
+            ${isMe ? 'Vous' : escHtml(m.fromName)} · ${timeStr(m.ts)}
+            <span class="e2e-badge">🔐 E2E</span>
           </div>
         </div>`;
-      }).join('');
+    }).join('');
 
-      container.scrollTop = container.scrollHeight;
-    } catch (e) {}
+    container.scrollTop = container.scrollHeight;
+  } catch (e) {}
+}
+
+async function sendMessage() {
+  if (!selectedPeer) return;
+  const input = document.getElementById('chatInput');
+  const text  = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  try {
+    await fetch('/api/chat/send', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ targetNodeId: selectedPeer.nodeId, message: text })
+    });
+    await loadMessages(selectedPeer.nodeId);
+  } catch (e) {
+    toast('Envoi échoué', 'error');
   }
+}
 
-  async function sendMessage() {
-    if (!selectedPeer) return;
-    const input = document.getElementById('chatInput');
-    const text = input.value.trim();
-    if (!text) return;
-    input.value = '';
+// ── Fichiers ─────────────────────────────────────────────────
+async function refreshFiles() {
+  try {
+    const res  = await fetch('/api/files');
+    const data = await res.json();
 
-    try {
-      await fetch('/api/chat/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetNodeId: selectedPeer.nodeId, message: text })
-      });
-      await loadMessages(selectedPeer.nodeId);
-    } catch (e) {
-      toast('Envoi échoué', 'error');
-    }
-  }
+    const localEl   = document.getElementById('localFiles');
+    const networkEl = document.getElementById('networkFiles');
 
-  // ── Fichiers ───────────────────────────────────────────────
-  function fileIcon(name) {
-    const ext = name.split('.').pop().toLowerCase();
-    const icons = { pdf: '📄', jpg: '🖼️', jpeg: '🖼️', png: '🖼️', mp4: '🎬', mp3: '🎵', zip: '🗜️', txt: '📝', doc: '📝', docx: '📝' };
-    return icons[ext] || '📁';
-  }
-
-  function formatSize(bytes) {
-    if (bytes > 1024*1024*1024) return (bytes/1024/1024/1024).toFixed(1) + ' Go';
-    if (bytes > 1024*1024) return (bytes/1024/1024).toFixed(1) + ' Mo';
-    if (bytes > 1024) return (bytes/1024).toFixed(0) + ' Ko';
-    return bytes + ' o';
-  }
-
-  async function refreshFiles() {
-    try {
-      const res = await fetch('/api/files');
-      const data = await res.json();
-
-      const localGrid = document.getElementById('localFilesGrid');
-      const networkGrid = document.getElementById('networkFilesGrid');
-
-      if (data.local.length === 0) {
-        localGrid.innerHTML = `<div class="no-peers-msg" style="grid-column:1/-1">Vous n'avez pas encore partagé de fichier</div>`;
-      } else {
-        localGrid.innerHTML = data.local.map(f => `
+    localEl.innerHTML = data.local.length === 0
+      ? `<div class="no-peers-msg" style="grid-column:1/-1">Vous n'avez pas encore partagé de fichier</div>`
+      : data.local.map(f => `
           <div class="file-card">
-            <span class="badge-local">Partagé</span>
+            <span class="badge badge-local">Partagé</span>
             <div class="file-card-icon">${fileIcon(f.file_name)}</div>
-            <div class="file-card-name">${f.file_name}</div>
-            <div class="file-card-meta">${formatSize(f.total_size)} · ${f.total_chunks} blocs</div>
+            <div class="file-card-name">${escHtml(f.file_name)}</div>
+            <div class="file-card-meta">${fmt(f.total_size)} · ${f.total_chunks} blocs</div>
           </div>`).join('');
-      }
 
-      if (data.network.length === 0) {
-        networkGrid.innerHTML = `<div class="no-peers-msg" style="grid-column:1/-1">Aucun fichier partagé sur le réseau</div>`;
-      } else {
-        networkGrid.innerHTML = data.network.map(f => `
-          <div class="file-card" onclick="promptDownload('${f.fileId}', '${escapeHtml(f.file_name)}', '${formatSize(f.total_size)}', '${escapeHtml(f.ownerName)}')">
-            <span class="badge-network">Réseau</span>
+    networkEl.innerHTML = data.network.length === 0
+      ? `<div class="no-peers-msg" style="grid-column:1/-1">Aucun fichier partagé sur le réseau</div>`
+      : data.network.map(f => `
+          <div class="file-card"
+            onclick="promptDownload('${escHtml(f.fileId)}','${escHtml(f.file_name)}','${fmt(f.total_size)}','${escHtml(f.ownerName)}')">
+            <span class="badge badge-network">Réseau</span>
             <div class="file-card-icon">${fileIcon(f.file_name)}</div>
-            <div class="file-card-name">${f.file_name}</div>
-            <div class="file-card-meta">${formatSize(f.total_size)}</div>
-            <div class="file-card-owner">Partagé par ${f.ownerName}</div>
+            <div class="file-card-name">${escHtml(f.file_name)}</div>
+            <div class="file-card-meta">${fmt(f.total_size)}</div>
+            <div class="file-card-owner">Par ${escHtml(f.ownerName)}</div>
           </div>`).join('');
-      }
-    } catch (e) {}
-  }
+  } catch (e) {}
+}
 
-  function handleDrop(e) {
-    e.preventDefault();
-    document.getElementById('shareZone').classList.remove('drag-over');
-    const file = e.dataTransfer.files[0];
-    if (file) shareFile(file.path || file.name);
-  }
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('shareZone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) shareFile(file.path || file.name);
+}
 
-  function handleFileSelect(e) {
-    const file = e.target.files[0];
-    if (file) shareFile(file.path || file.name);
-  }
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) shareFile(file.path || file.name);
+  e.target.value = '';
+}
 
-  async function shareFile(filePath) {
-    toast('Préparation du fichier...', 'info');
-    try {
-      const res = await fetch('/api/files/share', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filePath })
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast(`✅ "${data.file.name}" partagé sur le réseau`, 'success');
-        refreshFiles();
-      } else {
-        toast('Erreur : ' + data.error, 'error');
-      }
-    } catch (e) {
-      toast('Erreur lors du partage', 'error');
+async function shareFile(filePath) {
+  toast('Préparation du fichier...', 'info');
+  try {
+    const res  = await fetch('/api/files/share', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ filePath })
+    });
+    const data = await res.json();
+    if (data.success) {
+      toast(`✅ "${data.file.name}" partagé sur le réseau`, 'success');
+      refreshFiles();
+    } else {
+      toast('Erreur : ' + data.error, 'error');
     }
+  } catch (e) {
+    toast('Erreur lors du partage', 'error');
   }
+}
 
-  function promptDownload(fileId, name, size, ownerName) {
-    pendingDownload = { fileId, name };
-    document.getElementById('downloadModalDesc').textContent =
-      `"${name}" (${size}) — partagé par ${ownerName}`;
-    document.getElementById('downloadModal').classList.add('visible');
-  }
+function promptDownload(fileId, name, size, ownerName) {
+  pendingDl = { fileId, name };
+  document.getElementById('downloadModalDesc').textContent =
+    `"${name}" (${size}) — partagé par ${ownerName}`;
+  document.getElementById('downloadModal').classList.add('open');
+}
 
-  function closeModal() {
-    document.getElementById('downloadModal').classList.remove('visible');
-    pendingDownload = null;
-  }
+function closeModal() {
+  document.getElementById('downloadModal').classList.remove('open');
+  pendingDl = null;
+}
 
-  async function confirmDownload() {
-    if (!pendingDownload) return;
-    closeModal();
+async function confirmDownload() {
+  if (!pendingDl) return;
+  closeModal();
 
-    const { fileId, name } = pendingDownload;
-    const progressEl = document.getElementById('downloadProgress');
-    const fill = document.getElementById('progressFill');
-    const label = document.getElementById('progressLabel');
-    document.getElementById('downloadFilename').textContent = name;
+  const { fileId, name } = pendingDl;
+  const card  = document.getElementById('progressCard');
+  const fill  = document.getElementById('progressFill');
+  const label = document.getElementById('progressLabel');
+  document.getElementById('progressTitle').textContent = name;
 
-    progressEl.classList.add('visible');
-    fill.style.width = '0%';
-    label.textContent = 'Récupération des données...';
+  card.style.display = 'block';
+  fill.style.width   = '0%';
+  label.textContent  = 'Récupération des données...';
 
-    let prog = 0;
-    const interval = setInterval(() => {
-      prog = Math.min(prog + Math.random() * 4, 88);
-      fill.style.width = prog + '%';
-    }, 400);
+  let prog = 0;
+  const iv = setInterval(() => {
+    prog = Math.min(prog + Math.random() * 5, 88);
+    fill.style.width = prog + '%';
+  }, 400);
 
-    try {
-      const res = await fetch('/api/files/download', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileId })
-      });
-      const data = await res.json();
-      clearInterval(interval);
+  try {
+    const res  = await fetch('/api/files/download', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ fileId })
+    });
+    const data = await res.json();
+    clearInterval(iv);
 
-      if (data.success) {
-        fill.style.width = '100%';
-        label.textContent = `✅ Téléchargé dans downloads/`;
-        toast(`"${name}" téléchargé !`, 'success');
-        setTimeout(() => progressEl.classList.remove('visible'), 4000);
-        refreshFiles();
-      } else {
-        fill.style.width = '0%';
-        label.textContent = '❌ ' + data.error;
-        toast('Échec du téléchargement', 'error');
-      }
-    } catch (e) {
-      clearInterval(interval);
-      toast('Erreur réseau', 'error');
+    if (data.success) {
+      fill.style.width  = '100%';
+      label.textContent = `✅ Téléchargé dans le dossier downloads/`;
+      toast(`"${name}" téléchargé !`, 'success');
+      setTimeout(() => { card.style.display = 'none'; }, 5000);
+      refreshFiles();
+    } else {
+      fill.style.width  = '0%';
+      label.textContent = '❌ ' + data.error;
+      toast('Téléchargement échoué', 'error');
     }
+  } catch (e) {
+    clearInterval(iv);
+    label.textContent = '❌ Erreur réseau';
+    toast('Erreur réseau', 'error');
   }
+}
 
-  // ── IA ─────────────────────────────────────────────────────
-  async function askAI() {
-    const input = document.getElementById('aiInput');
-    const query = input.value.trim();
-    if (!query) return;
-    input.value = '';
+// ── IA ────────────────────────────────────────────────────────
+async function askAI() {
+  const input = document.getElementById('aiInput');
+  const query = input.value.trim();
+  if (!query) return;
+  input.value = '';
 
-    const container = document.getElementById('aiMessages');
+  const container = document.getElementById('aiMessages');
 
-    // Question utilisateur
+  container.insertAdjacentHTML('beforeend', `
+    <div class="msg-bubble me">
+      <div class="bubble">${escHtml(query)}</div>
+      <div class="bubble-meta">Vous · maintenant</div>
+    </div>`);
+
+  const loadId = 'load-' + Date.now();
+  container.insertAdjacentHTML('beforeend', `
+    <div class="msg-bubble them" id="${loadId}">
+      <div class="bubble">⏳ Réflexion...</div>
+    </div>`);
+  container.scrollTop = container.scrollHeight;
+
+  try {
+    const res  = await fetch('/api/ai/ask', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ query })
+    });
+    const data = await res.json();
+    document.getElementById(loadId)?.remove();
+
     container.insertAdjacentHTML('beforeend', `
-      <div class="msg-bubble me">
-        <div class="bubble">${escapeHtml(query)}</div>
-        <div class="bubble-meta">Vous · maintenant</div>
-      </div>`);
-
-    // Indicateur chargement
-    const loadId = 'load-' + Date.now();
-    container.insertAdjacentHTML('beforeend', `
-      <div class="msg-bubble them" id="${loadId}">
-        <div class="bubble">⏳ Réflexion...</div>
+      <div class="msg-bubble them">
+        <div class="bubble">${escHtml(data.text || ('⚠️ ' + (data.error || 'Erreur')))}</div>
+        <div class="bubble-meta">Assistant · ${timeStr(Date.now())}</div>
       </div>`);
     container.scrollTop = container.scrollHeight;
+  } catch (e) {
+    document.getElementById(loadId)?.remove();
+    toast('IA inaccessible', 'error');
+  }
+}
 
-    try {
-      const res = await fetch('/api/ai/ask', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query })
-      });
-      const data = await res.json();
-      document.getElementById(loadId)?.remove();
-
-      container.insertAdjacentHTML('beforeend', `
-        <div class="msg-bubble them">
-          <div class="bubble">${escapeHtml(data.text || ('⚠️ ' + (data.error || 'Erreur')))}</div>
-          <div class="bubble-meta">Assistant · maintenant</div>
-        </div>`);
-      container.scrollTop = container.scrollHeight;
-    } catch (e) {
-      document.getElementById(loadId)?.remove();
-      toast('IA inaccessible', 'error');
+// ── Polling ───────────────────────────────────────────────────
+function startPolling() {
+  refreshNetwork();
+  setInterval(refreshNetwork, 3000);
+  setInterval(() => {
+    if (selectedPeer && currentNav === 'messages') {
+      loadMessages(selectedPeer.nodeId);
     }
-  }
+  }, 2000);
+}
 
-  // ── Helpers ────────────────────────────────────────────────
-  function escapeHtml(str) {
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
-  // ── Polling ────────────────────────────────────────────────
-  function startPolling() {
-    refreshNetwork();
-    setInterval(refreshNetwork, 3000);
-    setInterval(() => {
-      if (selectedPeer) loadMessages(selectedPeer.nodeId);
-    }, 2000);
-  }
-
-  // ── Vérification au chargement ─────────────────────────────
-  window.addEventListener('load', async () => {
-    try {
-      const res = await fetch('/api/auth/check');
-      const data = await res.json();
-      if (data.registered) {
-        // Afficher le tab login directement
-        switchAuthTab('login');
-        document.querySelector('.auth-tab').textContent = `Bonjour, ${data.name} 👋`;
-      }
-    } catch (e) {}
-  });
+// ── Vérification au chargement ────────────────────────────────
+window.addEventListener('load', async () => {
+  try {
+    const res  = await fetch('/api/auth/check');
+    const data = await res.json();
+    if (data.registered) {
+      switchAuthTab('login');
+      document.getElementById('login-name-hint').textContent =
+        `Bonjour ${data.name} 👋 — entrez votre mot de passe`;
+    }
+  } catch (e) {}
+});
 </script>
 </body>
 </html>
