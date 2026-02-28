@@ -1394,24 +1394,12 @@
           if (fe) fe.style.width = '100%';
           if (le) le.textContent = '✅ Assemblé — téléchargement...';
 
-          // Récupérer le fichier depuis le serveur comme blob et le proposer au téléchargement
-          try {
-            const fileResp = await fetch(`/api/files/serve/${d.fileId}`);
-            if (!fileResp.ok) throw new Error(await fileResp.text());
-            const blob = await fileResp.blob();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = name;  // déclenche la sauvegarde dans le dossier Téléchargements
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
-            if (le) le.textContent = '✅ Téléchargé !';
-            toast(`"${name}" téléchargé !`, 'ok');
-          } catch (serveErr) {
-            if (le) le.textContent = '❌ Erreur de téléchargement : ' + serveErr.message;
-            toast('Erreur lors du téléchargement', 'err');
-          }
+          // Déclencher le vrai téléchargement dans le navigateur
+          // Utiliser window.location est plus robuste que fetch+blob pour les gros fichiers
+          window.location.assign(`/api/files/serve/${d.fileId}`);
+
+          if (le) le.textContent = '✅ Téléchargé !';
+          toast(`"${name}" téléchargé !`, 'ok');
         } else {
           if (le) le.textContent = '❌ ' + d.error;
           toast('Téléchargement échoué', 'err');
