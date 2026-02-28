@@ -249,7 +249,7 @@ function startWebServer(peerTable, getMyNodeId, sendEncryptedMessage, saveChunks
         const manifest = saveChunks(tmpPath);
 
         // Supprimer le fichier temporaire
-        try { fs.unlinkSync(tmpPath); } catch (_) {}
+        try { fs.unlinkSync(tmpPath); } catch (_) { }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
@@ -263,18 +263,62 @@ function startWebServer(peerTable, getMyNodeId, sendEncryptedMessage, saveChunks
       return;
     }
 
-    // ── Fichiers : télécharger ─────────────────────────────────────────
+    // ── Fichiers : télécharger (assembler les chunks depuis les pairs) ──
     if (req.method === 'POST' && url.pathname === '/api/files/download') {
       const body = JSON.parse(await readBody(req));
       const identityRaw = JSON.parse(fs.readFileSync('.archipel/identity.json'));
       try {
-        const outputPath = await downloadFile(body.fileId, peerTable, identityRaw.publicKey, './downloads');
+        await downloadFile(body.fileId, peerTable, identityRaw.publicKey, path.join('.archipel', 'ready'));
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, outputPath }));
+        res.end(JSON.stringify({ success: true, fileId: body.fileId }));
       } catch (err) {
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: err.message }));
       }
+      return;
+    }
+
+    // ── Fichiers : servir le fichier au navigateur (vrai téléchargement) ─
+    if (req.method === 'GET' && url.pathname.startsWith('/api/files/serve/')) {
+      const fileId = url.pathname.split('/').pop();
+      const manifestPath = path.join('.archipel', 'chunks', `${fileId}.manifest`);
+
+      if (!fs.existsSync(manifestPath)) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Fichier introuvable. Téléchargez-le d\'abord.' }));
+        return;
+      }
+
+      const manifest = JSON.parse(fs.readFileSync(manifestPath));
+
+      // Vérifier si le fichier assemblé existe déjà dans .archipel/ready/
+      const readyPath = path.join('.archipel', 'ready', manifest.file_name);
+      let fileBuf;
+      if (fs.existsSync(readyPath)) {
+        fileBuf = fs.readFileSync(readyPath);
+      } else {
+        // Assembler depuis les chunks en mémoire
+        const { readChunk } = require('./chunker');
+        const parts = [];
+        for (const chunk of manifest.chunks) {
+          const data = readChunk(fileId, chunk.index);
+          if (!data) {
+            res.writeHead(409, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: `Chunk ${chunk.index} manquant – téléchargez le fichier d'abord.` }));
+            return;
+          }
+          parts.push(data);
+        }
+        fileBuf = Buffer.concat(parts);
+      }
+
+      const encodedName = encodeURIComponent(manifest.file_name);
+      res.writeHead(200, {
+        'Content-Type': 'application/octet-stream',
+        'Content-Disposition': `attachment; filename="${manifest.file_name}"; filename*=UTF-8''${encodedName}`,
+        'Content-Length': fileBuf.length
+      });
+      res.end(fileBuf);
       return;
     }
 
@@ -326,7 +370,7 @@ function addIncomingMessage(fromNodeId, fromName, payload) {
       to: 'me',
       type: parsed.type || 'text',
       text: parsed.text || payload,
-      fileId:   parsed.fileId,
+      fileId: parsed.fileId,
       fileName: parsed.fileName,
       fileSize: parsed.fileSize,
       ts: Date.now()
