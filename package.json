@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/phoekerson/Archipel-MLH-Hackaton#readme",
   "dependencies": {
+    "busboy": "^1.6.0",
     "dotenv": "^17.3.1",
     "libsodium-wrappers": "^0.8.2"
   }

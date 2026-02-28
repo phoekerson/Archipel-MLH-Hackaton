@@ -2,6 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto_node = require('crypto');
+const busboy = require('busboy');
 const { queryGemini } = require('./gemini');
 
 // Historique des messages : nodeId -> [messages]
@@ -227,39 +228,48 @@ function startWebServer(peerTable, getMyNodeId, sendEncryptedMessage, saveChunks
       return;
     }
 
-    // ── Fichiers : partager depuis le navigateur (upload base64) ─────────
+    // ── Fichiers : partager depuis le navigateur (upload multipart) ────────
     if (req.method === 'POST' && url.pathname === '/api/files/share-upload') {
-      const body = JSON.parse(await readBody(req));
-      const { fileName, fileDataB64 } = body;
-      if (!fileName || !fileDataB64) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'fileName et fileDataB64 requis' }));
-        return;
-      }
-      try {
-        // Écrire dans un répertoire temporaire
-        const tmpDir = path.join('.archipel', 'tmp');
-        fs.mkdirSync(tmpDir, { recursive: true });
-        const tmpPath = path.join(tmpDir, fileName);
-        // fileDataB64 peut être un data URL (data:...;base64,xxx) ou du base64 pur
-        const base64Data = fileDataB64.includes(',') ? fileDataB64.split(',')[1] : fileDataB64;
-        fs.writeFileSync(tmpPath, Buffer.from(base64Data, 'base64'));
+      const tmpDir = path.join('.archipel', 'tmp');
+      fs.mkdirSync(tmpDir, { recursive: true });
 
-        // Chunker le fichier
-        const manifest = saveChunks(tmpPath);
+      const bb = busboy({ headers: req.headers });
+      let savedPath = null;
+      let savedName = null;
 
-        // Supprimer le fichier temporaire
-        try { fs.unlinkSync(tmpPath); } catch (_) { }
+      bb.on('file', (fieldname, fileStream, info) => {
+        const { filename } = info;
+        savedName = filename;
+        savedPath = path.join(tmpDir, filename);
+        const writeStream = fs.createWriteStream(savedPath);
+        fileStream.pipe(writeStream);
+        writeStream.on('finish', () => {
+          // Chunker et répondre
+          try {
+            const manifest = saveChunks(savedPath);
+            try { fs.unlinkSync(savedPath); } catch (_) { }
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+              success: true,
+              file: { name: manifest.file_name, size: manifest.total_size, fileId: manifest.file_id }
+            }));
+          } catch (err) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: err.message }));
+          }
+        });
+        writeStream.on('error', (err) => {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: err.message }));
+        });
+      });
 
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-          success: true,
-          file: { name: manifest.file_name, size: manifest.total_size, fileId: manifest.file_id }
-        }));
-      } catch (err) {
+      bb.on('error', (err) => {
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: err.message }));
-      }
+      });
+
+      req.pipe(bb);
       return;
     }
 
