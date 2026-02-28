@@ -433,8 +433,8 @@ function renderMsgs(msgs) {
     const who=isAI?'✨ Gemini':(isMe?'Vous':esc(m.fromName));
     const badge=isAI?'<span class="badge-ai">✨ IA</span>':'<span class="badge-e2e">🔐 E2E</span>';
 
-    if(m.fileInfo){
-      const fi=m.fileInfo;
+    if(m.fileId){
+      const fi={ fileId: m.fileId, name: m.fileName, size: m.fileSize };
       return `<div class="bbl ${cls}">
         <div class="file-bbl">
           <div class="fi-icon">${ficon(fi.name)}</div>
@@ -515,10 +515,16 @@ function onFileSelect(e) {
   const f=e.target.files[0]; e.target.value='';
   if(!f) return;
   if(!peer){toast('Sélectionnez un pair d\'abord','err');return;}
-  shareFile(f.path||f.name, f.name, f.size);
+
+  // Lire le fichier comme base64 (API standard du navigateur)
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    shareFile(ev.target.result, f.name, f.size);
+  };
+  reader.readAsDataURL(f);
 }
 
-async function shareFile(filePath, fileName, fileSize) {
+async function shareFile(fileDataB64, fileName, fileSize) {
   const c=document.getElementById('chatMsgs');
   if(c.querySelector('.empty-state')) c.innerHTML='';
   const lid='fs-'+Date.now();
@@ -527,7 +533,8 @@ async function shareFile(filePath, fileName, fileSize) {
   toast('Préparation du fichier...','inf');
 
   try {
-    const d=await(await fetch('/api/files/share',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filePath})})).json();
+    // Bug #1 fix : on envoie le contenu base64, pas le chemin local
+    const d=await(await fetch('/api/files/share-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fileName, fileDataB64})})).json();
     document.getElementById(lid)?.remove();
     if(d.success){
       c.insertAdjacentHTML('beforeend',`
@@ -540,6 +547,14 @@ async function shareFile(filePath, fileName, fileSize) {
         </div>`);
       c.scrollTop=c.scrollHeight;
       toast(`"${d.file.name}" partagé`,'ok');
+
+      // Bug #3 fix : notifier le pair que le fichier est disponible
+      if(peer) {
+        try {
+          await fetch('/api/chat/send-file',{method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({targetNodeId:peer.nodeId, fileId:d.file.fileId, fileName:d.file.name, fileSize:d.file.size})});
+        } catch(err){ toast('Envoi de notification échoué','err'); }
+      }
     } else { toast('Erreur : '+d.error,'err'); }
   } catch(e){ document.getElementById(lid)?.remove(); toast('Erreur','err'); }
 }

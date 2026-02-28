@@ -210,11 +210,47 @@ function startWebServer(peerTable, getMyNodeId, sendEncryptedMessage, saveChunks
       return;
     }
 
-    // ── Fichiers : partager ────────────────────────────────────────────
+    // ── Fichiers : partager (chemin serveur local) ───────────────────────
     if (req.method === 'POST' && url.pathname === '/api/files/share') {
       const body = JSON.parse(await readBody(req));
       try {
         const manifest = saveChunks(body.filePath);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          file: { name: manifest.file_name, size: manifest.total_size, fileId: manifest.file_id }
+        }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+      return;
+    }
+
+    // ── Fichiers : partager depuis le navigateur (upload base64) ─────────
+    if (req.method === 'POST' && url.pathname === '/api/files/share-upload') {
+      const body = JSON.parse(await readBody(req));
+      const { fileName, fileDataB64 } = body;
+      if (!fileName || !fileDataB64) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'fileName et fileDataB64 requis' }));
+        return;
+      }
+      try {
+        // Écrire dans un répertoire temporaire
+        const tmpDir = path.join('.archipel', 'tmp');
+        fs.mkdirSync(tmpDir, { recursive: true });
+        const tmpPath = path.join(tmpDir, fileName);
+        // fileDataB64 peut être un data URL (data:...;base64,xxx) ou du base64 pur
+        const base64Data = fileDataB64.includes(',') ? fileDataB64.split(',')[1] : fileDataB64;
+        fs.writeFileSync(tmpPath, Buffer.from(base64Data, 'base64'));
+
+        // Chunker le fichier
+        const manifest = saveChunks(tmpPath);
+
+        // Supprimer le fichier temporaire
+        try { fs.unlinkSync(tmpPath); } catch (_) {}
+
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           success: true,
