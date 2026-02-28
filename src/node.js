@@ -1,6 +1,9 @@
 require('dotenv').config();
-const crypto = require('./crypto');
+const cryptoModule = require('./crypto');
 const trust = require('./trust');
+const { startWebServer, addIncomingMessage, loadProfile } = require('./server');
+const { saveChunks } = require('./chunker');
+const { downloadFile } = require('./transfer');
 
 const sessions = new Map();
 const dgram = require('dgram');
@@ -10,12 +13,15 @@ const path = require('path');
 const { TYPE, buildPacket, parsePacket } = require('./packet');
 
 const identityPath = path.join('.archipel', 'identity.json');
-if (!fs.existsSync(identityPath)) {
-  console.error(' Aucune clé trouvée. Lance d\'abord : node src/keygen.js');
-  process.exit(1);
+let MY_NODE_ID = null;
+
+// Chargement différé de l'identité (peut ne pas exister au 1er lancement)
+function getMyNodeId() {
+  if (!MY_NODE_ID && fs.existsSync(identityPath)) {
+    MY_NODE_ID = JSON.parse(fs.readFileSync(identityPath)).publicKey;
+  }
+  return MY_NODE_ID || 'pending';
 }
-const identity = JSON.parse(fs.readFileSync(identityPath));
-const MY_NODE_ID = identity.publicKey;
 
 const UDP_PORT = parseInt(process.env.UDP_PORT) || 6000;
 const TCP_PORT = parseInt(process.env.TCP_PORT) || 7777;
@@ -27,51 +33,53 @@ const peerTable = new Map();
 
 function upsertPeer(nodeId, info) {
   peerTable.set(nodeId, { ...info, lastSeen: Date.now() });
-  console.log(` Pair connu: ${nodeId.slice(0, 16)}... @ ${info.ip}:${info.tcpPort}`);
+  const name = info.displayName || nodeId.slice(0, 12);
+  console.log(`📡 Pair : ${name} @ ${info.ip}:${info.tcpPort}`);
 }
 
 function cleanStalePeers() {
   const now = Date.now();
   for (const [id, peer] of peerTable.entries()) {
     if (now - peer.lastSeen > PEER_TIMEOUT) {
-      console.log(` Pair mort (timeout): ${id.slice(0, 16)}...`);
+      console.log(`💀 ${peer.displayName || id.slice(0, 12)} hors ligne`);
       peerTable.delete(id);
     }
   }
 }
 
-function displayPeerTable() {
-  console.log('\n══ PEER TABLE ══════════════════════════════');
-  if (peerTable.size === 0) console.log('  (aucun pair)');
-  for (const [id, peer] of peerTable.entries()) {
-    const age = Math.round((Date.now() - peer.lastSeen) / 1000);
-    console.log(`  ${id.slice(0, 16)}... | ${peer.ip}:${peer.tcpPort} | vu il y a ${age}s`);
-  }
-  console.log('═══════════════════════════════════════════\n');
-}
-
+// ── UDP Multicast ──────────────────────────────────────────────────────
 const udpSocket = dgram.createSocket({ type: 'udp4', reuseAddr: true });
 
 udpSocket.on('listening', () => {
   udpSocket.addMembership(MULTICAST_ADDR);
   udpSocket.setMulticastTTL(128);
-  console.log(` UDP Multicast en écoute sur ${MULTICAST_ADDR}:${UDP_PORT}`);
-  sendHello();
+  console.log(`📻 UDP Multicast actif sur ${MULTICAST_ADDR}:${UDP_PORT}`);
+  if (getMyNodeId() !== 'pending') sendHello();
 });
 
 udpSocket.on('message', (msg, rinfo) => {
   try {
     const pkt = parsePacket(msg);
-    if (pkt.type === TYPE.HELLO && pkt.nodeId !== MY_NODE_ID) {
-      console.log(` HELLO reçu de ${rinfo.address} (node: ${pkt.nodeId.slice(0, 16)}...)`);
-      upsertPeer(pkt.nodeId, { ip: rinfo.address, tcpPort: pkt.payload.tcpPort });
+    const myId = getMyNodeId();
+
+    if (pkt.type === TYPE.HELLO && pkt.nodeId !== myId) {
+      upsertPeer(pkt.nodeId, {
+        ip: rinfo.address,
+        tcpPort: pkt.payload.tcpPort,
+        displayName: pkt.payload.displayName || null
+      });
       sendPeerList(rinfo.address, pkt.payload.replyPort || UDP_PORT);
     }
-    if (pkt.type === TYPE.PEER_LIST && pkt.nodeId !== MY_NODE_ID) {
+
+    if (pkt.type === TYPE.PEER_LIST && pkt.nodeId !== myId) {
       const peers = pkt.payload.peers || [];
       peers.forEach(p => {
-        if (p.nodeId !== MY_NODE_ID) {
-          upsertPeer(p.nodeId, { ip: p.ip, tcpPort: p.tcpPort });
+        if (p.nodeId !== myId) {
+          upsertPeer(p.nodeId, {
+            ip: p.ip,
+            tcpPort: p.tcpPort,
+            displayName: p.displayName || null
+          });
         }
       });
     }
@@ -81,36 +89,53 @@ udpSocket.on('message', (msg, rinfo) => {
 udpSocket.on('error', (err) => console.error('UDP error:', err));
 
 function sendHello() {
-  const payload = { tcpPort: TCP_PORT, timestamp: Date.now() };
-  const pkt = buildPacket(TYPE.HELLO, MY_NODE_ID, payload);
+  const myId = getMyNodeId();
+  if (myId === 'pending') return;
+
+  const profile = loadProfile();
+  const payload = {
+    tcpPort: TCP_PORT,
+    timestamp: Date.now(),
+    displayName: profile?.displayName || null
+  };
+  const pkt = buildPacket(TYPE.HELLO, myId, payload);
   udpSocket.send(pkt, UDP_PORT, MULTICAST_ADDR, (err) => {
-    if (err) console.error('Erreur envoi HELLO:', err);
-    else console.log(` HELLO envoyé sur le multicast`);
+    if (!err) console.log(`📢 HELLO envoyé (${profile?.displayName || myId.slice(0, 12)})`);
   });
 }
 
 function sendPeerList(targetIp, targetPort) {
+  const myId = getMyNodeId();
+  if (myId === 'pending') return;
+
   const peers = Array.from(peerTable.entries()).map(([nodeId, info]) => ({
-    nodeId, ip: info.ip, tcpPort: info.tcpPort
+    nodeId,
+    ip: info.ip,
+    tcpPort: info.tcpPort,
+    displayName: info.displayName
   }));
-  const pkt = buildPacket(TYPE.PEER_LIST, MY_NODE_ID, { peers });
+  const pkt = buildPacket(TYPE.PEER_LIST, myId, { peers });
   udpSocket.send(pkt, targetPort, targetIp);
 }
 
+// ── TCP Server ──────────────────────────────────────────────────────────
 const tcpServer = net.createServer(async (socket) => {
-  console.log(`🔌 Connexion TCP entrante: ${socket.remoteAddress}`);
-
   let buffer = Buffer.alloc(0);
   let sessionKeys = null;
+  let remoteNodeId = null;
 
-  const serverEphKeypair = crypto.generateEphemeralKeypair();
-  const identity = crypto.loadIdentity();
+  // Attendre que l'identité soit disponible
+  const myId = getMyNodeId();
+  if (myId === 'pending') { socket.destroy(); return; }
+
+  const serverEphKeypair = cryptoModule.generateEphemeralKeypair();
+  const identity = cryptoModule.loadIdentity();
   const handshakePayload = {
     ephPublicKey: serverEphKeypair.publicKey.toString('hex'),
-    nodeId: MY_NODE_ID,
-    signature: crypto.sign(serverEphKeypair.publicKey, identity.privateKey).toString('hex')
+    nodeId: myId,
+    signature: cryptoModule.sign(serverEphKeypair.publicKey, identity.privateKey).toString('hex')
   };
-  socket.write(buildPacket(TYPE.HANDSHAKE, MY_NODE_ID, handshakePayload));
+  socket.write(buildPacket(TYPE.HANDSHAKE, myId, handshakePayload));
 
   socket.on('data', async (data) => {
     buffer = Buffer.concat([buffer, data]);
@@ -118,166 +143,174 @@ const tcpServer = net.createServer(async (socket) => {
       const pkt = parsePacket(buffer);
       buffer = Buffer.alloc(0);
 
-      // ── Handshake : réception clé éphémère du client ──
+      // ── Handshake ──
       if (pkt.type === TYPE.HANDSHAKE && !sessionKeys) {
         const clientEphPub = Buffer.from(pkt.payload.ephPublicKey, 'hex');
         const clientNodeId = Buffer.from(pkt.payload.nodeId, 'hex');
         const sig = Buffer.from(pkt.payload.signature, 'hex');
 
-        const valid = crypto.verify(clientEphPub, sig, clientNodeId);
-        if (!valid) {
-          console.log(' Signature invalide — connexion rejetée');
-          socket.destroy();
-          return;
-        }
+        const valid = cryptoModule.verify(clientEphPub, sig, clientNodeId);
+        if (!valid) { socket.destroy(); return; }
 
-        sessionKeys = crypto.deriveSessionKeysServer(serverEphKeypair, clientEphPub);
+        remoteNodeId = pkt.nodeId;
+        sessionKeys = cryptoModule.deriveSessionKeysServer(serverEphKeypair, clientEphPub);
         sessions.set(pkt.nodeId, sessionKeys);
         trust.markSeen(pkt.nodeId);
-        console.log(` Session établie avec ${pkt.nodeId.slice(0, 16)}...`);
+
+        const peer = peerTable.get(pkt.nodeId);
+        console.log(`🔐 Session avec ${peer?.displayName || pkt.nodeId.slice(0, 12)}`);
         return;
       }
 
-      // ── Messages chiffrés ──
+      // ── Message chiffré ──
       if (pkt.type === TYPE.MSG && sessionKeys) {
-        const decrypted = crypto.decrypt(pkt.rawPayload, sessionKeys.rxKey);
-        console.log(` Message reçu de ${pkt.nodeId.slice(0, 16)}...: ${decrypted.toString()}`);
+        const decrypted = cryptoModule.decrypt(pkt.rawPayload, sessionKeys.rxKey);
+        const text = decrypted.toString();
+        const peer = peerTable.get(pkt.nodeId);
+        const fromName = peer?.displayName || pkt.nodeId.slice(0, 8);
+        console.log(`💬 ${fromName}: ${text}`);
+        addIncomingMessage(pkt.nodeId, fromName, text);
         return;
       }
 
-      // ── Requête de manifest ──
-      // PC2 envoie { file_id } → PC1 répond avec le manifest complet
+      // ── Requête manifest ──
       if (pkt.type === TYPE.MANIFEST) {
         const fileId = pkt.payload.file_id;
-        console.log(` Requête manifest pour fichier ${fileId.slice(0, 16)}...`);
-
         const manifestPath = path.join('.archipel', 'chunks', `${fileId}.manifest`);
 
         if (!fs.existsSync(manifestPath)) {
-          console.log(`  Manifest introuvable pour ${fileId.slice(0, 16)}...`);
-          socket.write(buildPacket(TYPE.MANIFEST, MY_NODE_ID, { error: 'not_found', file_id: fileId }));
+          socket.write(buildPacket(TYPE.MANIFEST, myId, { error: 'not_found', file_id: fileId }));
           return;
         }
 
         const manifest = JSON.parse(fs.readFileSync(manifestPath));
-        socket.write(buildPacket(TYPE.MANIFEST, MY_NODE_ID, { manifest }));
-        console.log(` Manifest envoyé : ${manifest.file_name} (${manifest.total_chunks} chunks)`);
+        socket.write(buildPacket(TYPE.MANIFEST, myId, { manifest }));
         return;
       }
 
-      // ── Requête de chunk ──
+      // ── Requête chunk ──
       if (pkt.type === TYPE.CHUNK_REQ) {
         const { readChunk } = require('./chunker');
         const crypto_node = require('crypto');
-
         const fileId = pkt.rawPayload.slice(0, 32).toString('hex');
         const chunkIndex = pkt.rawPayload.readUInt32BE(32);
-
-        console.log(` Requête chunk ${chunkIndex} pour fichier ${fileId.slice(0, 16)}...`);
-
         const chunkData = readChunk(fileId, chunkIndex);
 
         if (!chunkData) {
-          console.log(`  Chunk ${chunkIndex} non trouvé`);
-          socket.write(buildPacket(TYPE.ACK, MY_NODE_ID, { status: 0x02, chunk_idx: chunkIndex }));
+          socket.write(buildPacket(TYPE.ACK, myId, { status: 0x02, chunk_idx: chunkIndex }));
           return;
         }
 
         const hash = crypto_node.createHash('sha256').update(chunkData).digest();
-        const response = Buffer.concat([chunkData, hash]);
-        socket.write(buildPacket(TYPE.CHUNK_DATA, MY_NODE_ID, response));
-        console.log(` Chunk ${chunkIndex} envoyé (${chunkData.length} bytes)`);
+        socket.write(buildPacket(TYPE.CHUNK_DATA, myId, Buffer.concat([chunkData, hash])));
         return;
       }
 
-    } catch (e) {
-      // paquet incomplet, attendre plus de data
-    }
+    } catch (e) {}
   });
 
   const pingInterval = setInterval(() => {
-    if (!socket.destroyed) {
-      socket.write(buildPacket(TYPE.ACK, MY_NODE_ID, { ping: true }));
-    }
+    if (!socket.destroyed) socket.write(buildPacket(TYPE.ACK, myId, { ping: true }));
   }, 15000);
 
   socket.on('close', () => clearInterval(pingInterval));
   socket.on('error', () => clearInterval(pingInterval));
 });
 
+// ── Envoyer un message chiffré ─────────────────────────────────────────
 async function sendEncryptedMessage(targetNodeId, message) {
   const peer = peerTable.get(targetNodeId);
-  if (!peer) {
-    console.log(' Pair inconnu:', targetNodeId.slice(0, 16));
-    return;
-  }
+  if (!peer) throw new Error('Pair introuvable');
 
-  const identity = crypto.loadIdentity();
-  const clientEphKeypair = crypto.generateEphemeralKeypair();
+  const myId = getMyNodeId();
+  const identity = cryptoModule.loadIdentity();
+  const clientEphKeypair = cryptoModule.generateEphemeralKeypair();
   const tcpClient = new net.Socket();
 
   tcpClient.connect(peer.tcpPort, peer.ip, () => {
-    const sig = crypto.sign(clientEphKeypair.publicKey, identity.privateKey);
-    const handshakePayload = {
+    const sig = cryptoModule.sign(clientEphKeypair.publicKey, identity.privateKey);
+    tcpClient.write(buildPacket(TYPE.HANDSHAKE, myId, {
       ephPublicKey: clientEphKeypair.publicKey.toString('hex'),
-      nodeId: MY_NODE_ID,
+      nodeId: myId,
       signature: sig.toString('hex')
-    };
-    tcpClient.write(buildPacket(TYPE.HANDSHAKE, MY_NODE_ID, handshakePayload));
+    }));
   });
 
-  let buffer = Buffer.alloc(0);
-  let sessionKeys = null;
+  return new Promise((resolve, reject) => {
+    let buffer = Buffer.alloc(0);
+    let sessionKeys = null;
 
-  tcpClient.on('data', (data) => {
-    buffer = Buffer.concat([buffer, data]);
-    try {
-      const pkt = parsePacket(buffer);
-      buffer = Buffer.alloc(0);
+    tcpClient.on('data', (data) => {
+      buffer = Buffer.concat([buffer, data]);
+      try {
+        const pkt = parsePacket(buffer);
+        buffer = Buffer.alloc(0);
 
-      if (pkt.type === TYPE.HANDSHAKE && !sessionKeys) {
-        const serverEphPub = Buffer.from(pkt.payload.ephPublicKey, 'hex');
-        const serverNodeId = Buffer.from(pkt.payload.nodeId, 'hex');
-        const sig = Buffer.from(pkt.payload.signature, 'hex');
+        if (pkt.type === TYPE.HANDSHAKE && !sessionKeys) {
+          const serverEphPub = Buffer.from(pkt.payload.ephPublicKey, 'hex');
+          const serverNodeId = Buffer.from(pkt.payload.nodeId, 'hex');
+          const sig = Buffer.from(pkt.payload.signature, 'hex');
 
-        const valid = crypto.verify(serverEphPub, sig, serverNodeId);
-        if (!valid) {
-          console.log(' Signature serveur invalide');
-          tcpClient.destroy();
-          return;
+          if (!cryptoModule.verify(serverEphPub, sig, serverNodeId)) {
+            tcpClient.destroy();
+            return reject(new Error('Signature serveur invalide'));
+          }
+
+          sessionKeys = cryptoModule.deriveSessionKeysClient(clientEphKeypair, serverEphPub);
+          const encrypted = cryptoModule.encrypt(Buffer.from(message), sessionKeys.txKey);
+          tcpClient.write(buildPacket(TYPE.MSG, myId, encrypted));
+          setTimeout(() => { tcpClient.destroy(); resolve(); }, 500);
         }
+      } catch (e) {}
+    });
 
-        sessionKeys = crypto.deriveSessionKeysClient(clientEphKeypair, serverEphPub);
-        console.log(` Session client établie avec ${pkt.nodeId.slice(0, 16)}...`);
-
-        const encrypted = crypto.encrypt(Buffer.from(message), sessionKeys.txKey);
-        tcpClient.write(buildPacket(TYPE.MSG, MY_NODE_ID, encrypted));
-        console.log(` Message chiffré envoyé à ${targetNodeId.slice(0, 16)}...`);
-      }
-    } catch (e) {}
+    tcpClient.on('error', reject);
+    setTimeout(() => { tcpClient.destroy(); reject(new Error('Timeout')); }, 10000);
   });
-
-  tcpClient.on('error', (err) => console.error('TCP client error:', err.message));
 }
 
-// ── DÉMARRAGE ─────────────────────────────────────────────────────────
+// ── Générer les clés (appelé à l'inscription) ─────────────────────────
+async function runKeygen() {
+  const sodium = require('libsodium-wrappers');
+  await sodium.ready;
+
+  if (fs.existsSync(identityPath)) return; // déjà générées
+
+  const keypair = sodium.crypto_sign_keypair();
+  const keys = {
+    publicKey: Buffer.from(keypair.publicKey).toString('hex'),
+    privateKey: Buffer.from(keypair.privateKey).toString('hex')
+  };
+
+  fs.mkdirSync('.archipel', { recursive: true });
+  fs.writeFileSync(identityPath, JSON.stringify(keys, null, 2));
+  MY_NODE_ID = keys.publicKey;
+  console.log('🔑 Clés générées automatiquement');
+
+  // Démarrer les HELLO maintenant que l'identité existe
+  sendHello();
+}
+
+// ── Démarrage ─────────────────────────────────────────────────────────
 async function main() {
-  await crypto.init();
-  console.log(' Cryptographie initialisée');
+  await cryptoModule.init();
+  console.log('✅ Cryptographie prête');
+
+  // Charger l'identité si elle existe déjà
+  if (fs.existsSync(identityPath)) {
+    MY_NODE_ID = JSON.parse(fs.readFileSync(identityPath)).publicKey;
+    console.log(`🔑 Identité chargée : ${MY_NODE_ID.slice(0, 16)}...`);
+  }
 
   udpSocket.bind(UDP_PORT);
-
   tcpServer.listen(TCP_PORT, '0.0.0.0', () => {
-    console.log(`\n  Nœud Archipel démarré`);
-    console.log(` Node ID: ${MY_NODE_ID.slice(0, 32)}...`);
-    console.log(` TCP sur port ${TCP_PORT}`);
-    console.log(` UDP Multicast: ${MULTICAST_ADDR}:${UDP_PORT}\n`);
+    console.log(`📡 TCP actif sur le port ${TCP_PORT}`);
   });
+
+  startWebServer(peerTable, getMyNodeId, sendEncryptedMessage, saveChunks, downloadFile, runKeygen);
 
   setInterval(sendHello, HELLO_INTERVAL);
   setInterval(cleanStalePeers, 30000);
-  setInterval(displayPeerTable, 60000);
-  setTimeout(displayPeerTable, 10000);
 }
 
 main().catch(console.error);
