@@ -27,7 +27,7 @@ const peerTable = new Map();
 
 function upsertPeer(nodeId, info) {
   peerTable.set(nodeId, { ...info, lastSeen: Date.now() });
-  console.log(`📡 Pair connu: ${nodeId.slice(0, 16)}... @ ${info.ip}:${info.tcpPort}`);
+  console.log(` Pair connu: ${nodeId.slice(0, 16)}... @ ${info.ip}:${info.tcpPort}`);
 }
 
 function cleanStalePeers() {
@@ -98,7 +98,7 @@ function sendPeerList(targetIp, targetPort) {
 }
 
 const tcpServer = net.createServer(async (socket) => {
-  console.log(` Connexion TCP entrante: ${socket.remoteAddress}`);
+  console.log(`🔌 Connexion TCP entrante: ${socket.remoteAddress}`);
 
   let buffer = Buffer.alloc(0);
   let sessionKeys = null;
@@ -118,6 +118,7 @@ const tcpServer = net.createServer(async (socket) => {
       const pkt = parsePacket(buffer);
       buffer = Buffer.alloc(0);
 
+      // ── Handshake : réception clé éphémère du client ──
       if (pkt.type === TYPE.HANDSHAKE && !sessionKeys) {
         const clientEphPub = Buffer.from(pkt.payload.ephPublicKey, 'hex');
         const clientNodeId = Buffer.from(pkt.payload.nodeId, 'hex');
@@ -137,12 +138,61 @@ const tcpServer = net.createServer(async (socket) => {
         return;
       }
 
+      // ── Messages chiffrés ──
       if (pkt.type === TYPE.MSG && sessionKeys) {
         const decrypted = crypto.decrypt(pkt.rawPayload, sessionKeys.rxKey);
         console.log(` Message reçu de ${pkt.nodeId.slice(0, 16)}...: ${decrypted.toString()}`);
         return;
       }
-    } catch (e) {}
+
+      // ── Requête de manifest ──
+      // PC2 envoie { file_id } → PC1 répond avec le manifest complet
+      if (pkt.type === TYPE.MANIFEST) {
+        const fileId = pkt.payload.file_id;
+        console.log(` Requête manifest pour fichier ${fileId.slice(0, 16)}...`);
+
+        const manifestPath = path.join('.archipel', 'chunks', `${fileId}.manifest`);
+
+        if (!fs.existsSync(manifestPath)) {
+          console.log(`  Manifest introuvable pour ${fileId.slice(0, 16)}...`);
+          socket.write(buildPacket(TYPE.MANIFEST, MY_NODE_ID, { error: 'not_found', file_id: fileId }));
+          return;
+        }
+
+        const manifest = JSON.parse(fs.readFileSync(manifestPath));
+        socket.write(buildPacket(TYPE.MANIFEST, MY_NODE_ID, { manifest }));
+        console.log(` Manifest envoyé : ${manifest.file_name} (${manifest.total_chunks} chunks)`);
+        return;
+      }
+
+      // ── Requête de chunk ──
+      if (pkt.type === TYPE.CHUNK_REQ) {
+        const { readChunk } = require('./chunker');
+        const crypto_node = require('crypto');
+
+        const fileId = pkt.rawPayload.slice(0, 32).toString('hex');
+        const chunkIndex = pkt.rawPayload.readUInt32BE(32);
+
+        console.log(` Requête chunk ${chunkIndex} pour fichier ${fileId.slice(0, 16)}...`);
+
+        const chunkData = readChunk(fileId, chunkIndex);
+
+        if (!chunkData) {
+          console.log(`  Chunk ${chunkIndex} non trouvé`);
+          socket.write(buildPacket(TYPE.ACK, MY_NODE_ID, { status: 0x02, chunk_idx: chunkIndex }));
+          return;
+        }
+
+        const hash = crypto_node.createHash('sha256').update(chunkData).digest();
+        const response = Buffer.concat([chunkData, hash]);
+        socket.write(buildPacket(TYPE.CHUNK_DATA, MY_NODE_ID, response));
+        console.log(` Chunk ${chunkIndex} envoyé (${chunkData.length} bytes)`);
+        return;
+      }
+
+    } catch (e) {
+      // paquet incomplet, attendre plus de data
+    }
   });
 
   const pingInterval = setInterval(() => {
@@ -202,7 +252,7 @@ async function sendEncryptedMessage(targetNodeId, message) {
 
         const encrypted = crypto.encrypt(Buffer.from(message), sessionKeys.txKey);
         tcpClient.write(buildPacket(TYPE.MSG, MY_NODE_ID, encrypted));
-        console.log(`📤 Message chiffré envoyé à ${targetNodeId.slice(0, 16)}...`);
+        console.log(` Message chiffré envoyé à ${targetNodeId.slice(0, 16)}...`);
       }
     } catch (e) {}
   });
@@ -210,9 +260,9 @@ async function sendEncryptedMessage(targetNodeId, message) {
   tcpClient.on('error', (err) => console.error('TCP client error:', err.message));
 }
 
-// ── DÉMARRAGE ── (remplace les anciens appels directs)  ───────────────
+// ── DÉMARRAGE ─────────────────────────────────────────────────────────
 async function main() {
-  await crypto.init(); // ← attend que libsodium soit prêt
+  await crypto.init();
   console.log(' Cryptographie initialisée');
 
   udpSocket.bind(UDP_PORT);
