@@ -4,8 +4,8 @@ const path = require('path');
 const crypto_node = require('crypto');
 const { queryGemini } = require('./gemini');
 
-const messageHistory = [];
-const incomingFiles = []; // fichiers reçus en attente
+// Historique des messages : nodeId -> [messages]
+const conversations = new Map();
 
 // ── Profil utilisateur ────────────────────────────────────────────────
 function loadProfile() {
@@ -23,6 +23,16 @@ function hashPassword(password) {
   return crypto_node.createHash('sha256').update(password + 'archipel_salt').digest('hex');
 }
 
+// ── Gestion des conversations ─────────────────────────────────────────
+function getConv(nodeId) {
+  if (!conversations.has(nodeId)) conversations.set(nodeId, []);
+  return conversations.get(nodeId);
+}
+
+function addMsg(nodeId, msg) {
+  getConv(nodeId).push({ ...msg, id: Date.now() + Math.random() });
+}
+
 // ── Serveur HTTP ──────────────────────────────────────────────────────
 function startWebServer(peerTable, getMyNodeId, sendEncryptedMessage, saveChunks, downloadFile, runKeygen) {
   const UI_PORT = parseInt(process.env.UI_PORT) || 8080;
@@ -31,12 +41,11 @@ function startWebServer(peerTable, getMyNodeId, sendEncryptedMessage, saveChunks
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
     if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
 
     const url = new URL(req.url, `http://localhost:${UI_PORT}`);
 
-    // ── Servir l'UI ────────────────────────────────────────────────────
+    // ── UI ─────────────────────────────────────────────────────────────
     if (req.method === 'GET' && url.pathname === '/') {
       const uiPath = path.join(__dirname, '..', 'public', 'index.html');
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
@@ -44,7 +53,7 @@ function startWebServer(peerTable, getMyNodeId, sendEncryptedMessage, saveChunks
       return;
     }
 
-    // ── Vérifier si l'utilisateur est déjà inscrit ─────────────────────
+    // ── Auth : vérification ────────────────────────────────────────────
     if (req.method === 'GET' && url.pathname === '/api/auth/check') {
       const profile = loadProfile();
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -52,7 +61,7 @@ function startWebServer(peerTable, getMyNodeId, sendEncryptedMessage, saveChunks
       return;
     }
 
-    // ── Inscription (génère les clés automatiquement) ──────────────────
+    // ── Auth : inscription ─────────────────────────────────────────────
     if (req.method === 'POST' && url.pathname === '/api/auth/register') {
       const body = JSON.parse(await readBody(req));
       const { firstName, lastName, password } = body;
@@ -63,28 +72,22 @@ function startWebServer(peerTable, getMyNodeId, sendEncryptedMessage, saveChunks
         return;
       }
 
-      // Générer les clés automatiquement
       await runKeygen();
-
-      // Sauvegarder le profil
       saveProfile({
-        firstName,
-        lastName,
+        firstName, lastName,
         displayName: `${firstName} ${lastName}`,
         passwordHash: hashPassword(password),
         createdAt: new Date().toISOString()
       });
 
-      console.log(`✅ Utilisateur enregistré : ${firstName} ${lastName}`);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: true, displayName: `${firstName} ${lastName}` }));
       return;
     }
 
-    // ── Connexion ──────────────────────────────────────────────────────
+    // ── Auth : connexion ───────────────────────────────────────────────
     if (req.method === 'POST' && url.pathname === '/api/auth/login') {
       const body = JSON.parse(await readBody(req));
-      const { password } = body;
       const profile = loadProfile();
 
       if (!profile) {
@@ -93,7 +96,7 @@ function startWebServer(peerTable, getMyNodeId, sendEncryptedMessage, saveChunks
         return;
       }
 
-      if (profile.passwordHash !== hashPassword(password)) {
+      if (profile.passwordHash !== hashPassword(body.password)) {
         res.writeHead(401, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Mot de passe incorrect' }));
         return;
@@ -104,16 +107,12 @@ function startWebServer(peerTable, getMyNodeId, sendEncryptedMessage, saveChunks
       return;
     }
 
-    // ── Statut du réseau (pairs avec leurs noms) ───────────────────────
+    // ── Réseau ─────────────────────────────────────────────────────────
     if (req.method === 'GET' && url.pathname === '/api/network') {
       const profile = loadProfile();
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
-        me: {
-          displayName: profile?.displayName || 'Moi',
-          nodeId: getMyNodeId().slice(0, 16) + '...',
-          online: true
-        },
+        me: { displayName: profile?.displayName || 'Moi', online: true },
         peers: Array.from(peerTable.entries()).map(([id, p]) => ({
           nodeId: id,
           displayName: p.displayName || `Nœud ${id.slice(0, 8)}`,
@@ -126,23 +125,31 @@ function startWebServer(peerTable, getMyNodeId, sendEncryptedMessage, saveChunks
       return;
     }
 
-    // ── Envoyer un message (par nodeId, abstrait pour l'UI) ────────────
+    // ── Chat : récupérer une conversation ──────────────────────────────
+    if (req.method === 'GET' && url.pathname.startsWith('/api/chat/')) {
+      const nodeId = url.pathname.split('/').pop();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(getConv(nodeId)));
+      return;
+    }
+
+    // ── Chat : envoyer un message texte ────────────────────────────────
     if (req.method === 'POST' && url.pathname === '/api/chat/send') {
       const body = JSON.parse(await readBody(req));
       const { targetNodeId, message } = body;
       const profile = loadProfile();
 
-      messageHistory.push({
-        id: Date.now(),
+      addMsg(targetNodeId, {
         from: 'me',
         fromName: profile?.displayName || 'Moi',
         to: targetNodeId,
+        type: 'text',
         text: message,
         ts: Date.now()
       });
 
       try {
-        await sendEncryptedMessage(targetNodeId, message);
+        await sendEncryptedMessage(targetNodeId, JSON.stringify({ type: 'text', text: message }));
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true }));
       } catch (err) {
@@ -152,30 +159,66 @@ function startWebServer(peerTable, getMyNodeId, sendEncryptedMessage, saveChunks
       return;
     }
 
-    // ── Récupérer les messages d'une conversation ──────────────────────
-    if (req.method === 'GET' && url.pathname.startsWith('/api/chat/')) {
-      const nodeId = url.pathname.split('/').pop();
-      const conv = messageHistory.filter(m => m.to === nodeId || m.from === nodeId);
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(conv));
+    // ── Chat : envoyer un fichier ──────────────────────────────────────
+    if (req.method === 'POST' && url.pathname === '/api/chat/send-file') {
+      const body = JSON.parse(await readBody(req));
+      const { targetNodeId, fileId, fileName, fileSize } = body;
+      const profile = loadProfile();
+
+      // Ajouter dans la conversation locale
+      addMsg(targetNodeId, {
+        from: 'me',
+        fromName: profile?.displayName || 'Moi',
+        to: targetNodeId,
+        type: 'file',
+        fileId,
+        fileName,
+        fileSize,
+        ts: Date.now()
+      });
+
+      // Notifier le pair via un message chiffré spécial
+      try {
+        await sendEncryptedMessage(targetNodeId, JSON.stringify({
+          type: 'file', fileId, fileName, fileSize
+        }));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
       return;
     }
 
-    // ── Partager un fichier (chemin local) ─────────────────────────────
+    // ── Chat : sauvegarder une réponse Gemini dans la conv ─────────────
+    if (req.method === 'POST' && url.pathname === '/api/chat/gemini-reply') {
+      const body = JSON.parse(await readBody(req));
+      const { targetNodeId, text } = body;
+
+      addMsg(targetNodeId, {
+        from: 'gemini',
+        fromName: 'Gemini',
+        to: targetNodeId,
+        type: 'gemini',
+        text,
+        ts: Date.now()
+      });
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true }));
+      return;
+    }
+
+    // ── Fichiers : partager ────────────────────────────────────────────
     if (req.method === 'POST' && url.pathname === '/api/files/share') {
       const body = JSON.parse(await readBody(req));
-      const { filePath } = body;
-
       try {
-        const manifest = saveChunks(filePath);
+        const manifest = saveChunks(body.filePath);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           success: true,
-          file: {
-            name: manifest.file_name,
-            size: manifest.total_size,
-            fileId: manifest.file_id // caché de l'UI principale
-          }
+          file: { name: manifest.file_name, size: manifest.total_size, fileId: manifest.file_id }
         }));
       } catch (err) {
         res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -184,14 +227,12 @@ function startWebServer(peerTable, getMyNodeId, sendEncryptedMessage, saveChunks
       return;
     }
 
-    // ── Télécharger un fichier (par fileId, passé en interne) ──────────
+    // ── Fichiers : télécharger ─────────────────────────────────────────
     if (req.method === 'POST' && url.pathname === '/api/files/download') {
       const body = JSON.parse(await readBody(req));
-      const { fileId } = body;
       const identityRaw = JSON.parse(fs.readFileSync('.archipel/identity.json'));
-
       try {
-        const outputPath = await downloadFile(fileId, peerTable, identityRaw.publicKey, './downloads');
+        const outputPath = await downloadFile(body.fileId, peerTable, identityRaw.publicKey, './downloads');
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, outputPath }));
       } catch (err) {
@@ -201,48 +242,23 @@ function startWebServer(peerTable, getMyNodeId, sendEncryptedMessage, saveChunks
       return;
     }
 
-    // ── Lister les fichiers disponibles sur le réseau ──────────────────
-    if (req.method === 'GET' && url.pathname === '/api/files') {
-      const { listAvailableFiles } = require('./chunker');
-      const local = listAvailableFiles();
-
-      // Fusionner fichiers locaux + fichiers annoncés par les pairs
-      const networkFiles = [];
-      for (const [nodeId, peer] of peerTable.entries()) {
-        if (peer.sharedFiles) {
-          peer.sharedFiles.forEach(f => {
-            networkFiles.push({
-              ...f,
-              ownerName: peer.displayName || nodeId.slice(0, 8),
-              ownerNodeId: nodeId,
-              source: 'network'
-            });
-          });
-        }
-      }
-
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({
-        local: local.map(f => ({ ...f, source: 'local' })),
-        network: networkFiles,
-        incoming: incomingFiles
-      }));
-      return;
-    }
-
-    // ── Gemini AI ──────────────────────────────────────────────────────
+    // ── Gemini ─────────────────────────────────────────────────────────
     if (req.method === 'POST' && url.pathname === '/api/ai/ask') {
       const body = JSON.parse(await readBody(req));
-      const { query } = body;
-      const context = messageHistory.slice(-10).map(m => ({ from: m.fromName, text: m.text }));
+      const { query, conversationNodeId } = body;
+
+      // Passer le contexte de la conversation en cours
+      const context = conversationNodeId
+        ? getConv(conversationNodeId).slice(-10).map(m => ({ from: m.fromName, text: m.text }))
+        : [];
+
       const result = await queryGemini(context, query);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result));
       return;
     }
 
-    res.writeHead(404);
-    res.end('Not found');
+    res.writeHead(404); res.end('Not found');
   });
 
   server.listen(UI_PORT, '0.0.0.0', () => {
@@ -261,21 +277,27 @@ function readBody(req) {
   });
 }
 
-// Appelé depuis node.js quand un message est reçu
-function addIncomingMessage(fromNodeId, fromName, text) {
-  messageHistory.push({
-    id: Date.now(),
-    from: fromNodeId,
-    fromName: fromName || fromNodeId.slice(0, 8),
-    to: 'me',
-    text,
-    ts: Date.now()
-  });
+// ── Appelé depuis node.js quand un message est reçu ──────────────────
+function addIncomingMessage(fromNodeId, fromName, payload) {
+  try {
+    // Le payload peut être JSON (text, file) ou texte brut
+    let parsed;
+    try { parsed = JSON.parse(payload); } catch { parsed = { type: 'text', text: payload }; }
+
+    addMsg(fromNodeId, {
+      from: fromNodeId,
+      fromName,
+      to: 'me',
+      type: parsed.type || 'text',
+      text: parsed.text || payload,
+      fileId:   parsed.fileId,
+      fileName: parsed.fileName,
+      fileSize: parsed.fileSize,
+      ts: Date.now()
+    });
+  } catch (e) {
+    console.error('addIncomingMessage error:', e);
+  }
 }
 
-// Appelé depuis node.js quand un fichier est annoncé
-function addIncomingFile(fromNodeId, fromName, fileInfo) {
-  incomingFiles.push({ ...fileInfo, fromNodeId, fromName, ts: Date.now() });
-}
-
-module.exports = { startWebServer, addIncomingMessage, addIncomingFile, loadProfile };
+module.exports = { startWebServer, addIncomingMessage, loadProfile };
